@@ -109,6 +109,16 @@ class Myo:
         # Disable sleep
         self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID, 0x0019, [0x09, 0x01, 0x01]))
 
+        # Start EMG
+        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID, 0x19,
+                                                             [0x01, 0x03, 0x02, 0x01, 0x00]))
+
+        # Subscribe for EMG
+        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID, 0x2c, [0x01, 0x00]))
+        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID, 0x2f, [0x01, 0x00]))
+        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID, 0x32, [0x01, 0x00]))
+        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID, 0x35, [0x01, 0x00]))
+
         # # Some useful read commands:
         # self.send(self.bglib.ble_cmd_attclient_read_by_handle(self.bluetoothConnectionID, 0x03))  # Read device name
         # self.send(self.bglib.ble_cmd_attclient_read_by_handle(self.bluetoothConnectionID, 0x17))  # Read firmware ver
