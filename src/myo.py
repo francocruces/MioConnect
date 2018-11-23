@@ -19,6 +19,7 @@ class Myo:
         self.bluetoothConnectionID = None
         self.scanning = False
         self.connected = False
+        print("holi")
 
     @staticmethod
     def _detect_port():
