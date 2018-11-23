@@ -22,6 +22,10 @@ class Myo:
 
     @staticmethod
     def _detect_port():
+        """
+        Detect COM port.
+        :return: COM port with the expected ID
+        """
         print("Detecting available ports")
         for p in comports():
             if re.search(r'PID=2458:0*1', p[2]):
@@ -31,13 +35,24 @@ class Myo:
         return None
 
     def receive(self):
+        """
+        Check for received evens and handle them.
+        """
         self.lib.check_activity(self.serial)
 
     def send(self, msg):
+        """
+        Send given message through serial.
+        :param msg: packed message to send
+        """
+        # A small delay is required for the Myo to process them correctly
         time.sleep(0.2)
         self.lib.send_command(self.serial, msg)
 
     def handle_discover(self, e, payload):
+        """
+        Handler for ble_evt_gap_scan_response event.
+        """
         if self.scanning and not self.myo_address:
             print("Device found", payload['sender'])
             if payload['data'].endswith(bytes(self.myo_id)):
@@ -47,22 +62,37 @@ class Myo:
                 self.scanning = False
 
     def handle_connect(self, e, payload):
+        """
+        Handler for ble_rsp_gap_connect_direct event.
+        """
         self.bluetoothConnectionID = payload['connection_handle']
         print("Connected with id", self.bluetoothConnectionID)
 
     def handle_disconnect(self, e, payload):
+        """
+        Handle for ble_evt_connection_disconnected event.
+        """
         print("Disconnected:", payload)
 
     def handle_connection_status(self, e, payload):
+        """
+        Handler for ble_evt_connection_status event.
+        """
         print("Connection status: ", payload)
         self.connected = True
 
     def handle_emg(self, e, payload):
+        """
+        Handler for EMG events, expected as a ble_evt_attclient_attribute_value event with handle 43, 46, 49 or 52.
+        """
         emg_handles = [43, 46, 49, 52]
         if payload['atthandle'] in emg_handles and self.connected:
             print(list(payload['value']))
 
     def set_handlers(self):
+        """
+        Set handlers for relevant events.
+        """
         self.lib.ble_evt_gap_scan_response.add(self.handle_discover)
         self.lib.ble_rsp_gap_connect_direct.add(self.handle_connect)
         self.lib.ble_evt_attclient_attribute_value.add(self.handle_emg)
@@ -72,12 +102,18 @@ class Myo:
         # self.bglib.ble_rsp_attclient_attribute_write.add(print)
 
     def disconnect_all(self):
+        """
+        Stop possible scanning and close all connections.
+        """
         self.send(self.lib.ble_cmd_gap_end_procedure())
         self.send(self.lib.ble_cmd_connection_disconnect(0))
         self.send(self.lib.ble_cmd_connection_disconnect(1))
         self.send(self.lib.ble_cmd_connection_disconnect(2))
 
     def connect(self):
+        """
+        Procedure for connection with the Myo Armband. Scans, connects, disables sleep and starts EMG stream.
+        """
         # Add handlers for expected events
         self.set_handlers()
 
