@@ -106,6 +106,13 @@ class Myo:
         print()
         self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID, 0x0019, [0x03, 0x01, 0x01]))
 
+        # Disable sleep
+        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID, 0x0019, [0x09, 0x01, 0x01]))
+
+        # # Some useful read commands:
+        # self.send(self.bglib.ble_cmd_attclient_read_by_handle(self.bluetoothConnectionID, 0x03))  # Read device name
+        # self.send(self.bglib.ble_cmd_attclient_read_by_handle(self.bluetoothConnectionID, 0x17))  # Read firmware ver
+
 
 if __name__ == '__main__':
     myo = Myo()
