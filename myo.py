@@ -104,6 +104,8 @@ class Myo:
         # Notify successful connection with print and vibration
         print("Connection successful")
         print()
+        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID, 0x0019, [0x03, 0x01, 0x01]))
+
 
 if __name__ == '__main__':
     myo = Myo()
