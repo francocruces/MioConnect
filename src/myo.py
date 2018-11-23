@@ -1,7 +1,7 @@
 import re
 import time
 from serial.tools.list_ports import comports
-from bglib import BGLib
+from public.bglib import BGLib
 import serial
 
 
@@ -161,9 +161,19 @@ class Myo:
 
 
 if __name__ == '__main__':
-    myo = Myo()
-    myo.disconnect_all()
-    myo.connect()
-    print("Ready for EMG data")
-    while True:
-        myo.receive()
+    myo = None
+    try:
+        myo = Myo()
+        myo.disconnect_all()
+        myo.connect()
+        print("Ready for EMG data")
+        while True:
+            myo.receive()
+    except KeyboardInterrupt:
+        pass
+    except serial.serialutil.SerialException as err:
+        print("Error opening port. Please close other programs using this serial.")
+    finally:
+        if myo is not None:
+            myo.disconnect_all()
+            print("\nDisconnected")
