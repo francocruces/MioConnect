@@ -3,13 +3,10 @@ import time
 from serial.tools.list_ports import comports
 from src.public.bglib import BGLib
 import serial
+from src.public.myohw import *
 
 
 class Myo:
-    myo_id = [0x42, 0x48, 0x12, 0x4A,
-              0x7F, 0x2C, 0x48, 0x47,
-              0xB9, 0xDE, 0x04, 0xA9,
-              0x01, 0x00, 0x06, 0xD5]
 
     def __init__(self):
         self.serial = serial.Serial(port=self._detect_port(), baudrate=9600, dsrdtr=1)
@@ -55,7 +52,7 @@ class Myo:
         """
         if self.scanning and not self.myo_address:
             print("Device found", payload['sender'])
-            if payload['data'].endswith(bytes(self.myo_id)):
+            if payload['data'].endswith(bytes(Final.myo_id)):
                 self.myo_address = payload['sender']
                 print("Myo found", self.myo_address)
                 print()
@@ -86,9 +83,14 @@ class Myo:
         Handler for EMG events, expected as a ble_evt_attclient_attribute_value event with handle 43, 46, 49 or 52.
         """
         # TODO: Send data via OSC.
-        emg_handles = [43, 46, 49, 52]
+        emg_handles = [
+            ServiceHandles.EmgData0Characteristic,
+            ServiceHandles.EmgData1Characteristic,
+            ServiceHandles.EmgData2Characteristic,
+            ServiceHandles.EmgData3Characteristic
+        ]
         if payload['atthandle'] in emg_handles and self.connected:
-            print(list(payload['value']))
+            print(payload['atthandle'], list(payload['value']))
 
     def set_handlers(self):
         """
@@ -132,7 +134,7 @@ class Myo:
 
         # Direct connection
         print("Connecting to", self.myo_address)
-        self.send(self.lib.ble_cmd_gap_connect_direct(self.myo_address, 0, 6, 6, 64, 0))
+        self.send(self.lib.ble_cmd_gap_connect_direct(self.myo_address, *Final.direct_connection_tail))
 
         # Await response
         while self.bluetoothConnectionID is None or not self.connected:
@@ -141,24 +143,47 @@ class Myo:
         # Notify successful connection with print and vibration
         print("Connection successful")
         print()
-        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID, 0x0019, [0x03, 0x01, 0x01]))
+        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID,
+                                                             ServiceHandles.CommandCharacteristic,
+                                                             [MyoCommand.myohw_command_vibrate,
+                                                              0x01,
+                                                              VibrationType.myohw_vibration_medium]))
 
         # Disable sleep
-        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID, 0x0019, [0x09, 0x01, 0x01]))
+        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID,
+                                                             ServiceHandles.CommandCharacteristic,
+                                                             [MyoCommand.myohw_command_set_sleep_mode,
+                                                              0x01,
+                                                              SleepMode.myohw_sleep_mode_never_sleep]))
 
         # Start EMG
-        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID, 0x19,
-                                                             [0x01, 0x03, 0x02, 0x01, 0x00]))
+        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID,
+                                                             ServiceHandles.CommandCharacteristic,
+                                                             [MyoCommand.myohw_command_set_mode,
+                                                              0x03,
+                                                              EmgMode.myohw_emg_mode_send_emg,
+                                                              ImuMode.myohw_imu_mode_send_data,
+                                                              ClassifierMode.myohw_classifier_mode_disabled]))
 
         # Subscribe for EMG
-        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID, 0x2c, [0x01, 0x00]))
-        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID, 0x2f, [0x01, 0x00]))
-        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID, 0x32, [0x01, 0x00]))
-        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID, 0x35, [0x01, 0x00]))
+        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID,
+                                                             ServiceHandles.EmgData0Descriptor,
+                                                             Final.subscribe_payload))
+        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID,
+                                                             ServiceHandles.EmgData1Descriptor,
+                                                             Final.subscribe_payload))
+        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID,
+                                                             ServiceHandles.EmgData2Descriptor,
+                                                             Final.subscribe_payload))
+        self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID,
+                                                             ServiceHandles.EmgData3Descriptor,
+                                                             Final.subscribe_payload))
 
-        # # Some useful read commands:
-        # self.send(self.bglib.ble_cmd_attclient_read_by_handle(self.bluetoothConnectionID, 0x03))  # Read device name
-        # self.send(self.bglib.ble_cmd_attclient_read_by_handle(self.bluetoothConnectionID, 0x17))  # Read firmware ver
+        # Some useful read commands
+        self.send(self.lib.ble_cmd_attclient_read_by_handle(self.bluetoothConnectionID,
+                                                            ServiceHandles.DeviceName))
+        self.send(self.lib.ble_cmd_attclient_read_by_handle(self.bluetoothConnectionID,
+                                                            ServiceHandles.FirmwareVersionCharacteristic))
 
 
 if __name__ == '__main__':
