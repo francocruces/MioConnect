@@ -35,7 +35,19 @@ from enum import Enum
 # TODO: Parse myohw.h and refactor.
 
 
-class Services(Enum):
+class Constants:
+
+    myo_id = [0x42, 0x48, 0x12, 0x4A,
+              0x7F, 0x2C, 0x48, 0x47,
+              0xB9, 0xDE, 0x04, 0xA9,
+              0x01, 0x00, 0x06, 0xD5]
+
+    direct_connection_tail = (0, 6, 6, 64, 0)
+
+    subscribe_payload = [0x01, 0x00]
+
+
+class Services:
     ControlService = 0x0001  # Myo info service
     MyoInfoCharacteristic = 0x0101  # Serial number for this Myo and various parameters which are specific to this
     # firmware. Read - only attribute.
@@ -56,7 +68,7 @@ class Services(Enum):
     EmgData3Characteristic = 0x0405  # Raw EMG data.Notify - only characteristic.
 
 
-class ServiceHandles(Enum):
+class ServiceHandles:
     """
     Thanks to https://github.com/brokenpylons/MyoLinux/blob/master/src/myoapi_p.h
     """
@@ -86,13 +98,13 @@ class ServiceHandles(Enum):
     DeviceName = 0x3
 
 
-class StandardServices(Enum):
+class StandardServices:
     BatteryService = 0x180f  # Battery service
     BatteryLevelCharacteristic = 0x2a19  # Current battery level information.Read / notify characteristic.
     DeviceName = 0x2a00  # Device name data.Read / write characteristic.
 
 
-class Pose(Enum):
+class Pose:
     myohw_pose_rest = 0x0000
     myohw_pose_fist = 0x0001
     myohw_pose_wave_in = 0x0002
@@ -102,7 +114,7 @@ class Pose(Enum):
     myohw_pose_unknown = 0xffff
 
 
-class MyoCommand(Enum):
+class MyoCommand:
     # payload size = 3: EmgMode ImuMode ClassifierMode
     myohw_command_set_mode = 0x01  # Set EMG and IMU modes.
 
@@ -125,13 +137,13 @@ class MyoCommand(Enum):
     myohw_command_user_action = 0x0b  # Notify user that an action has been recognized or confirmed
 
 
-class EmgMode(Enum):
+class EmgMode:
     myohw_emg_mode_none = 0x00  # Do not send EMG data.
     myohw_emg_mode_send_emg = 0x02  # Send filtered EMG data.
     myohw_emg_mode_send_emg_raw = 0x03  # Send raw (unfiltered) EMG data.
 
 
-class ImuMode(Enum):
+class ImuMode:
     myohw_imu_mode_none = 0x00  # Do not send IMU data or events.
     myohw_imu_mode_send_data = 0x01  # Send IMU data streams (accelerometer gyroscope and orientation).
     myohw_imu_mode_send_events = 0x02  # Send motion events detected by the IMU (e.g. taps).
@@ -139,28 +151,29 @@ class ImuMode(Enum):
     myohw_imu_mode_send_raw = 0x04  # Send raw IMU data streams.
 
 
-class ClassifierMode(Enum):
+class ClassifierMode:
     myohw_classifier_mode_disabled = 0x00  # Disable and reset the internal state of the onboard classifier.
     myohw_classifier_mode_enabled = 0x01  # Send classifier events (poses and arm events).
 
 
-class VibrationType(Enum):
+class VibrationType:
     myohw_vibration_none = 0x00  # Do not vibrate.
     myohw_vibration_short = 0x01  # Vibrate for a short amount of time.
     myohw_vibration_medium = 0x02  # Vibrate for a medium amount of time.
     myohw_vibration_long = 0x03  # Vibrate for a long amount of time.
 
 
-class SleepMode(Enum):
+class SleepMode:
     myohw_sleep_mode_normal = 0  # Normal sleep mode; Myo will sleep after a period of inactivity.
     myohw_sleep_mode_never_sleep = 1  # Never go to sleep.
 
 
-class UnlockType(Enum):
+class UnlockType:
     myohw_unlock_lock = 0x00  # Re-lock immediately.
     myohw_unlock_timed = 0x01  # Unlock now and re-lock after a fixed timeout.
     myohw_unlock_hold = 0x02  # Unlock now and remain unlocked until a lock command is received.
 
 
-class UserActionType(Enum):
+class UserActionType:
     myohw_user_action_single = 0  # User did a single discrete action such as pausing a video.
+
