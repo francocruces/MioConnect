@@ -35,7 +35,7 @@ from enum import Enum
 # TODO: Parse myohw.h and refactor.
 
 
-class Constants:
+class Final:
 
     myo_id = [0x42, 0x48, 0x12, 0x4A,
               0x7F, 0x2C, 0x48, 0x47,

@@ -52,7 +52,7 @@ class Myo:
         """
         if self.scanning and not self.myo_address:
             print("Device found", payload['sender'])
-            if payload['data'].endswith(bytes(Constants.myo_id)):
+            if payload['data'].endswith(bytes(Final.myo_id)):
                 self.myo_address = payload['sender']
                 print("Myo found", self.myo_address)
                 print()
@@ -134,7 +134,7 @@ class Myo:
 
         # Direct connection
         print("Connecting to", self.myo_address)
-        self.send(self.lib.ble_cmd_gap_connect_direct(self.myo_address, *Constants.direct_connection_tail))
+        self.send(self.lib.ble_cmd_gap_connect_direct(self.myo_address, *Final.direct_connection_tail))
 
         # Await response
         while self.bluetoothConnectionID is None or not self.connected:
@@ -168,20 +168,22 @@ class Myo:
         # Subscribe for EMG
         self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID,
                                                              ServiceHandles.EmgData0Descriptor,
-                                                             Constants.subscribe_payload))
+                                                             Final.subscribe_payload))
         self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID,
                                                              ServiceHandles.EmgData1Descriptor,
-                                                             Constants.subscribe_payload))
+                                                             Final.subscribe_payload))
         self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID,
                                                              ServiceHandles.EmgData2Descriptor,
-                                                             Constants.subscribe_payload))
+                                                             Final.subscribe_payload))
         self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID,
                                                              ServiceHandles.EmgData3Descriptor,
-                                                             Constants.subscribe_payload))
+                                                             Final.subscribe_payload))
 
-        # # Some useful read commands:
-        # self.send(self.bglib.ble_cmd_attclient_read_by_handle(self.bluetoothConnectionID, 0x03))  # Read device name
-        # self.send(self.bglib.ble_cmd_attclient_read_by_handle(self.bluetoothConnectionID, 0x17))  # Read firmware ver
+        # Some useful read commands
+        self.send(self.lib.ble_cmd_attclient_read_by_handle(self.bluetoothConnectionID,
+                                                            ServiceHandles.DeviceName))
+        self.send(self.lib.ble_cmd_attclient_read_by_handle(self.bluetoothConnectionID,
+                                                            ServiceHandles.FirmwareVersionCharacteristic))
 
 
 if __name__ == '__main__':
