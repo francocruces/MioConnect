@@ -6,7 +6,7 @@ import serial
 from src.public.myohw import *
 
 
-class Myo:
+class MyoDriver:
 
     def __init__(self):
         self.serial = serial.Serial(port=self._detect_port(), baudrate=9600, dsrdtr=1)
@@ -147,7 +147,7 @@ class Myo:
                                                              ServiceHandles.CommandCharacteristic,
                                                              [MyoCommand.myohw_command_vibrate,
                                                               0x01,
-                                                              VibrationType.myohw_vibration_medium]))
+                                                              VibrationType.myohw_vibration_short]))
 
         # Disable sleep
         self.send(self.lib.ble_cmd_attclient_attribute_write(self.bluetoothConnectionID,
@@ -189,7 +189,7 @@ class Myo:
 if __name__ == '__main__':
     myo = None
     try:
-        myo = Myo()
+        myo = MyoDriver()
         myo.disconnect_all()
         myo.connect()
         print("Ready for EMG data")
