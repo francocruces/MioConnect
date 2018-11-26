@@ -1,7 +1,7 @@
 import re
 import time
 from serial.tools.list_ports import comports
-from public.bglib import BGLib
+from src.public.bglib import BGLib
 import serial
 
 
@@ -85,6 +85,7 @@ class Myo:
         """
         Handler for EMG events, expected as a ble_evt_attclient_attribute_value event with handle 43, 46, 49 or 52.
         """
+        # TODO: Send data via OSC.
         emg_handles = [43, 46, 49, 52]
         if payload['atthandle'] in emg_handles and self.connected:
             print(list(payload['value']))
@@ -172,8 +173,8 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         pass
     except serial.serialutil.SerialException as err:
-        print("Error opening port. Please close other programs using this serial.")
+        print("ERROR: Couldn't open port. Please close MyoConnect and any program using this serial port.")
     finally:
         if myo is not None:
             myo.disconnect_all()
-            print("\nDisconnected")
+            print("Disconnected.")
