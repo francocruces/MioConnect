@@ -90,7 +90,7 @@ class MyoDriver:
             self.myo_to_connect.set_id(payload['connection'])
             print("Connected with id", self.myo_to_connect.connectionId)
 
-    def handle_emg(self, e, payload):
+    def handle_attribute_value(self, e, payload):
         """
         Handler for EMG events, expected as a ble_evt_attclient_attribute_value event with handle 43, 46, 49 or 52.
         """
@@ -101,8 +101,19 @@ class MyoDriver:
             ServiceHandles.EmgData2Characteristic,
             ServiceHandles.EmgData3Characteristic
         ]
+        imu_handles = [
+            ServiceHandles.IMUDataDescriptor
+        ]
         if payload['atthandle'] in emg_handles and self.connected:
-            print(payload['atthandle'], list(payload['value']))
+            self.handle_emg(payload)
+        elif payload['atthandle'] in imu_handles and self.connected:
+            self.handle_imu(payload)
+
+    def handle_emg(self, payload):
+        print(payload['atthandle'], list(payload['value']))
+
+    def handle_imu(self, payload):
+        print(payload['atthandle'], list(payload['value']))
 
     def set_handlers(self):
         """
@@ -110,7 +121,7 @@ class MyoDriver:
         """
         self.lib.ble_evt_gap_scan_response.add(self.handle_discover)
         self.lib.ble_rsp_gap_connect_direct.add(self.handle_connect)
-        self.lib.ble_evt_attclient_attribute_value.add(self.handle_emg)
+        self.lib.ble_evt_attclient_attribute_value.add(self.handle_attribute_value)
         self.lib.ble_evt_connection_disconnected.add(self.handle_disconnect)
         self.lib.ble_evt_connection_status.add(self.handle_connection_status)
         self.lib.ble_rsp_attclient_read_by_handle.add(print)
@@ -176,6 +187,11 @@ class MyoDriver:
                                                               EmgMode.myohw_emg_mode_send_emg,
                                                               ImuMode.myohw_imu_mode_send_data,
                                                               ClassifierMode.myohw_classifier_mode_disabled]))
+
+        # Subscribe for IMU
+        self.send(self.lib.ble_cmd_attclient_attribute_write(self.myo_to_connect.connectionId,
+                                                             ServiceHandles.IMUDataDescriptor,
+                                                             Final.subscribe_payload))
 
         # Subscribe for EMG
         self.send(self.lib.ble_cmd_attclient_attribute_write(self.myo_to_connect.connectionId,
