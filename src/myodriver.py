@@ -5,7 +5,7 @@ from src.public.bglib import BGLib
 import serial
 from src.public.myohw import *
 from src.myo import Myo
-
+from src.config import Config
 
 class MyoDriver:
 
@@ -45,7 +45,7 @@ class MyoDriver:
         :param msg: packed message to send
         """
         # A small delay is required for the Myo to process them correctly
-        time.sleep(0.2)
+        time.sleep(Config.MESSAGE_DELAY)
         self.lib.send_command(self.serial, msg)
 
     def handle_discover(self, e, payload):
@@ -104,16 +104,24 @@ class MyoDriver:
         imu_handles = [
             ServiceHandles.IMUDataCharacteristic
         ]
-        if payload['atthandle'] in emg_handles and self.connected:
+        if payload['atthandle'] in emg_handles:
             self.handle_emg(payload)
-        else:#if payload['atthandle'] in imu_handles and self.connected:
+        elif payload['atthandle'] in imu_handles:
             self.handle_imu(payload)
+        elif payload['atthandle'] == ServiceHandles.DeviceName:
+            print("Device name", payload['value'])
+        elif payload['atthandle'] == ServiceHandles.FirmwareVersionCharacteristic:
+            print("Firmware version", payload['value'])
+        else:
+            print(payload)
 
     def handle_emg(self, payload):
-        print("EMG", payload['connection'], payload['atthandle'], payload['value'])
+        if Config.PRINT_EMG:
+            print("EMG", payload['connection'], payload['atthandle'], payload['value'])
 
     def handle_imu(self, payload):
-        print("IMU", payload['connection'], payload['atthandle'], payload['value'])
+        if Config.PRINT_IMU:
+            print("IMU", payload['connection'], payload['atthandle'], payload['value'])
 
     def set_handlers(self):
         """
@@ -124,7 +132,7 @@ class MyoDriver:
         self.lib.ble_evt_attclient_attribute_value.add(self.handle_attribute_value)
         self.lib.ble_evt_connection_disconnected.add(self.handle_disconnect)
         self.lib.ble_evt_connection_status.add(self.handle_connection_status)
-        self.lib.ble_rsp_attclient_read_by_handle.add(print)
+        # self.lib.ble_rsp_attclient_read_by_handle.add(print)
         # self.bglib.ble_rsp_attclient_attribute_write.add(print)
 
     def disconnect_all(self):
@@ -184,9 +192,9 @@ class MyoDriver:
                                                              ServiceHandles.CommandCharacteristic,
                                                              [MyoCommand.myohw_command_set_mode,
                                                               0x03,
-                                                              EmgMode.myohw_emg_mode_send_emg,
-                                                              ImuMode.myohw_imu_mode_send_data,
-                                                              ClassifierMode.myohw_classifier_mode_disabled]))
+                                                              Config.EMG_MODE,
+                                                              Config.IMU_MODE,
+                                                              Config.CLASSIFIER_MODE]))
 
         # Subscribe for IMU
         self.send(self.lib.ble_cmd_attclient_attribute_write(self.myo_to_connect.connectionId,
@@ -213,8 +221,10 @@ class MyoDriver:
         self.send(self.lib.ble_cmd_attclient_read_by_handle(self.myo_to_connect.connectionId,
                                                             ServiceHandles.FirmwareVersionCharacteristic))
         self.myos.append(self.myo_to_connect)
+        print("Myo ready", self.myo_to_connect)
         self.myo_to_connect = None
-        print("Myo ready")
+        self.scanning = False
+        self.connected = False
         print()
 
 
