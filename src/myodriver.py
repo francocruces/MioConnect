@@ -102,18 +102,18 @@ class MyoDriver:
             ServiceHandles.EmgData3Characteristic
         ]
         imu_handles = [
-            ServiceHandles.IMUDataDescriptor
+            ServiceHandles.IMUDataCharacteristic
         ]
         if payload['atthandle'] in emg_handles and self.connected:
             self.handle_emg(payload)
-        elif payload['atthandle'] in imu_handles and self.connected:
+        else:#if payload['atthandle'] in imu_handles and self.connected:
             self.handle_imu(payload)
 
     def handle_emg(self, payload):
-        print(payload['atthandle'], list(payload['value']))
+        print("EMG", payload['connection'], payload['atthandle'], payload['value'])
 
     def handle_imu(self, payload):
-        print(payload['atthandle'], list(payload['value']))
+        print("IMU", payload['connection'], payload['atthandle'], payload['value'])
 
     def set_handlers(self):
         """
