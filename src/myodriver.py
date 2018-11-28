@@ -7,6 +7,7 @@ from src.public.myohw import *
 from src.myo import Myo
 from src.config import Config
 
+
 class MyoDriver:
 
     def __init__(self):
@@ -221,7 +222,7 @@ class MyoDriver:
         self.send(self.lib.ble_cmd_attclient_read_by_handle(self.myo_to_connect.connectionId,
                                                             ServiceHandles.FirmwareVersionCharacteristic))
         self.myos.append(self.myo_to_connect)
-        print("Myo ready", self.myo_to_connect)
+        print("Myo ready", self.myo_to_connect.connectionId, self.myo_to_connect.address)
         self.myo_to_connect = None
         self.scanning = False
         self.connected = False

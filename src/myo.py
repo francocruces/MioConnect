@@ -6,3 +6,4 @@ class Myo:
 
     def set_id(self, connection_id):
         self.connectionId = connection_id
+        return self
