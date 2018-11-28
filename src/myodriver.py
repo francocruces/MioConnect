@@ -6,12 +6,15 @@ import serial
 from src.public.myohw import *
 from src.myo import Myo
 from src.config import Config
+from pythonosc import udp_client
+from pythonosc import osc_message
 
 
 class MyoDriver:
 
     def __init__(self):
         self.serial = serial.Serial(port=self._detect_port(), baudrate=9600, dsrdtr=1)
+        self.osc = udp_client.SimpleUDPClient('localhost', 3000)
         self.lib = BGLib()
 
         self.myos = []
@@ -110,7 +113,7 @@ class MyoDriver:
         elif payload['atthandle'] in imu_handles:
             self.handle_imu(payload)
         elif payload['atthandle'] == ServiceHandles.DeviceName:
-            print("Device name", payload['value'])
+            print("Device name", payload['value'].decode())
         elif payload['atthandle'] == ServiceHandles.FirmwareVersionCharacteristic:
             print("Firmware version", payload['value'])
         else:
@@ -120,9 +123,49 @@ class MyoDriver:
         if Config.PRINT_EMG:
             print("EMG", payload['connection'], payload['atthandle'], payload['value'])
 
+        # Send first sample
+        data = payload['value'][0:8]
+        builder = udp_client.OscMessageBuilder("/myo/emg")
+        builder.add_arg(str(payload['connection']), 's')
+        for i in data:
+            builder.add_arg(i, 'i')
+        self.osc.send(builder.build())
+
+        # Send second message
+        data = payload['value'][8:16]
+        builder = udp_client.OscMessageBuilder("/myo/emg")
+        builder.add_arg(str(payload['connection']), 's')
+        for i in data:
+            builder.add_arg(i, 'i')
+        self.osc.send(builder.build())
+
     def handle_imu(self, payload):
         if Config.PRINT_IMU:
             print("IMU", payload['connection'], payload['atthandle'], payload['value'])
+
+        # Send orientation
+        data = payload['value'][0:8]
+        builder = udp_client.OscMessageBuilder("/myo/orientation")
+        builder.add_arg(str(payload['connection']), 's')
+        for i in data:
+            builder.add_arg(i, 'f')
+        self.osc.send(builder.build())
+
+        # Send accelerometer
+        data = payload['value'][8:14]
+        builder = udp_client.OscMessageBuilder("/myo/accel")
+        builder.add_arg(str(payload['connection']), 's')
+        for i in data:
+            builder.add_arg(i, 'f')
+        self.osc.send(builder.build())
+
+        # Send gyroscope
+        data = payload['value'][14:20]
+        builder = udp_client.OscMessageBuilder("/myo/gyro")
+        builder.add_arg(str(payload['connection']), 's')
+        for i in data:
+            builder.add_arg(i, 'f')
+        self.osc.send(builder.build())
 
     def set_handlers(self):
         """
