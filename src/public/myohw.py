@@ -100,8 +100,8 @@ class ServiceHandles:
 
 class StandardServices:
     BatteryService = 0x180f  # Battery service
-    BatteryLevelCharacteristic = 0x2a19  # Current battery level information.Read / notify characteristic.
-    DeviceName = 0x2a00  # Device name data.Read / write characteristic.
+    BatteryLevelCharacteristic = 0x2a19  # Current battery level information. Read/notify characteristic.
+    DeviceName = 0x2a00  # Device name data. Read/write characteristic.
 
 
 class Pose:

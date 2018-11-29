@@ -112,12 +112,12 @@ class MyoDriver:
             self.handle_emg(payload)
         elif payload['atthandle'] in imu_handles:
             self.handle_imu(payload)
-        elif payload['atthandle'] == ServiceHandles.DeviceName:
-            print("Device name", payload['value'].decode())
-        elif payload['atthandle'] == ServiceHandles.FirmwareVersionCharacteristic:
-            print("Firmware version", payload['value'])
         else:
-            print(payload)
+            for myo in self.myos:
+                myo.handle_attribute_value(payload)
+            if not payload['atthandle'] == ServiceHandles.DeviceName and \
+                    not payload['atthandle'] == ServiceHandles.FirmwareVersionCharacteristic:
+                print(e, payload)
 
     def handle_emg(self, payload):
         if Config.PRINT_EMG:
@@ -188,7 +188,7 @@ class MyoDriver:
         self.send(self.lib.ble_cmd_connection_disconnect(1))
         self.send(self.lib.ble_cmd_connection_disconnect(2))
 
-    def connect_myo(self):
+    def add_myo_connection(self):
         """
         Procedure for connection with the Myo Armband. Scans, connects, disables sleep and starts EMG stream.
         """
@@ -259,11 +259,6 @@ class MyoDriver:
                                                              ServiceHandles.EmgData3Descriptor,
                                                              Final.subscribe_payload))
 
-        # Some useful read commands
-        self.send(self.lib.ble_cmd_attclient_read_by_handle(self.myo_to_connect.connectionId,
-                                                            ServiceHandles.DeviceName))
-        self.send(self.lib.ble_cmd_attclient_read_by_handle(self.myo_to_connect.connectionId,
-                                                            ServiceHandles.FirmwareVersionCharacteristic))
         self.myos.append(self.myo_to_connect)
         print("Myo ready", self.myo_to_connect.connectionId, self.myo_to_connect.address)
         self.myo_to_connect = None
@@ -271,21 +266,50 @@ class MyoDriver:
         self.connected = False
         print()
 
+    def run(self, myo_amount):
+        myo_driver.disconnect_all()
+        while len(self.myos) < myo_amount:
+            print("CONNECTING MYO " + str(len(self.myos) + 1) + " OUT OF " + str(myo_amount))
+            print()
+            self.add_myo_connection()
+
+    def get_info(self):
+        print("Getting myo info")
+        print()
+        for myo in self.myos:
+            self.send(self.lib.ble_cmd_attclient_read_by_handle(myo.connectionId,
+                                                                ServiceHandles.DeviceName))
+            self.send(self.lib.ble_cmd_attclient_read_by_handle(myo.connectionId,
+                                                                ServiceHandles.FirmwareVersionCharacteristic))
+        while not self._myos_ready():
+            self.receive()
+        print("Myo list:")
+        for myo in self.myos:
+            print(" - " + str(myo))
+        print()
+
+    def _myos_ready(self):
+        for m in self.myos:
+            if not m.ready():
+                return False
+        return True
+
 
 if __name__ == '__main__':
-    myo = None
+    myo_driver = None
     try:
-        myo = MyoDriver()
-        myo.disconnect_all()
-        myo.connect_myo()
-        print("Ready for EMG data")
+        myo_driver = MyoDriver()
+        myo_driver.run(Config.MYO_AMOUNT)
+        if Config.GET_MYO_INFO:
+            myo_driver.get_info()
+        print("Ready for data")
         while True:
-            myo.receive()
+            myo_driver.receive()
     except KeyboardInterrupt:
         pass
     except serial.serialutil.SerialException as err:
         print("ERROR: Couldn't open port. Please close MyoConnect and any program using this serial port.")
     finally:
-        if myo is not None:
-            myo.disconnect_all()
+        if myo_driver is not None:
+            myo_driver.disconnect_all()
             print("Disconnected.")
