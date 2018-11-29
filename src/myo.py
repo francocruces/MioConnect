@@ -2,6 +2,9 @@ from src.public.myohw import *
 
 
 class Myo:
+    """
+    Wrapper for a Myo, its name, address, firmware and most importantly, connection id.
+    """
 
     def __init__(self, address):
         self.address = address
@@ -10,10 +13,16 @@ class Myo:
         self.firmware_version = None
 
     def set_id(self, connection_id):
+        """
+        Set connection id, required for every write/read attribute message.
+        """
         self.connectionId = connection_id
         return self
 
     def handle_attribute_value(self, payload):
+        """
+        When attribute values are not EMG/IMU related, are a Myo attribute being read.
+        """
         if self.connectionId == payload['connection']:
             if payload['atthandle'] == ServiceHandles.DeviceName:
                 self.device_name = payload['value'].decode()
@@ -25,6 +34,9 @@ class Myo:
                     print("MYO WITH UNEXPECTED FIRMWARE, MAY NOT BEHAVE PROPERLY.", payload['value'])
 
     def ready(self):
+        """
+        :return:True if every field is valid, False otherwise.
+        """
         return self.address is not None and \
                self.connectionId is not None and \
                self.device_name is not None and \

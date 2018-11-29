@@ -78,8 +78,8 @@ class ServiceHandles:
     IMUDataDescriptor = 0x1d
     # MotionEventCharacteristic
 
-    ClassifierService = 0x0003  # Classifier event service.
-    ClassifierEventCharacteristic = 0x0103  # Classifier event data.Indicate - only characteristic.
+    ClassifierService = 0x0003
+    ClassifierEventCharacteristic = 0x0103
 
     EmgData0Characteristic = 0x2b
     EmgData1Characteristic = 0x2e

@@ -10,6 +10,9 @@ from pythonosc import udp_client
 
 
 class MyoDriver:
+    """
+    Responsible for handling myo connections and messages.
+    """
 
     def __init__(self):
         self.serial = serial.Serial(port=self._detect_port(), baudrate=9600, dsrdtr=1)
@@ -50,6 +53,18 @@ class MyoDriver:
         # A small delay is required for the Myo to process them correctly
         time.sleep(Config.MESSAGE_DELAY)
         self.lib.send_command(self.serial, msg)
+
+    def write_att(self, connection, atthandle, data):
+        """
+        Wrapper for code readability.
+        """
+        self.send(self.lib.ble_cmd_attclient_attribute_write(connection, atthandle, data))
+
+    def read_att(self, connection, atthandle):
+        """
+        Wrapper for code readability.
+        """
+        self.send(self.lib.ble_cmd_attclient_read_by_handle(connection, atthandle))
 
     def handle_discover(self, e, payload):
         """
@@ -97,7 +112,6 @@ class MyoDriver:
         """
         Handler for EMG events, expected as a ble_evt_attclient_attribute_value event with handle 43, 46, 49 or 52.
         """
-        # TODO: Send data via OSC.
         emg_handles = [
             ServiceHandles.EmgData0Characteristic,
             ServiceHandles.EmgData1Characteristic,
@@ -119,6 +133,10 @@ class MyoDriver:
                 print(e, payload)
 
     def handle_emg(self, payload):
+        """
+        Handle EMG data.
+        :param payload: emg data as two samples in a single pack.
+        """
         if Config.PRINT_EMG:
             print("EMG", payload['connection'], payload['atthandle'], payload['value'])
 
@@ -139,6 +157,10 @@ class MyoDriver:
         self.osc.send(builder.build())
 
     def handle_imu(self, payload):
+        """
+        Handle IMU data.
+        :param payload: imu data in a single byte array.
+        """
         if Config.PRINT_IMU:
             print("IMU", payload['connection'], payload['atthandle'], payload['value'])
 
@@ -217,46 +239,46 @@ class MyoDriver:
         # Notify successful connection with print and vibration
         print("Connection successful. Setting up...")
         print()
-        self.send(self.lib.ble_cmd_attclient_attribute_write(self.myo_to_connect.connectionId,
-                                                             ServiceHandles.CommandCharacteristic,
-                                                             [MyoCommand.myohw_command_vibrate,
-                                                              0x01,
-                                                              VibrationType.myohw_vibration_short]))
+        self.write_att(self.myo_to_connect.connectionId,
+                       ServiceHandles.CommandCharacteristic,
+                       [MyoCommand.myohw_command_vibrate,
+                        0x01,
+                        VibrationType.myohw_vibration_short])
 
         # Disable sleep
-        self.send(self.lib.ble_cmd_attclient_attribute_write(self.myo_to_connect.connectionId,
-                                                             ServiceHandles.CommandCharacteristic,
-                                                             [MyoCommand.myohw_command_set_sleep_mode,
-                                                              0x01,
-                                                              SleepMode.myohw_sleep_mode_never_sleep]))
+        self.write_att(self.myo_to_connect.connectionId,
+                       ServiceHandles.CommandCharacteristic,
+                       [MyoCommand.myohw_command_set_sleep_mode,
+                        0x01,
+                        SleepMode.myohw_sleep_mode_never_sleep])
 
         # Start EMG
-        self.send(self.lib.ble_cmd_attclient_attribute_write(self.myo_to_connect.connectionId,
-                                                             ServiceHandles.CommandCharacteristic,
-                                                             [MyoCommand.myohw_command_set_mode,
-                                                              0x03,
-                                                              Config.EMG_MODE,
-                                                              Config.IMU_MODE,
-                                                              Config.CLASSIFIER_MODE]))
+        self.write_att(self.myo_to_connect.connectionId,
+                       ServiceHandles.CommandCharacteristic,
+                       [MyoCommand.myohw_command_set_mode,
+                        0x03,
+                        Config.EMG_MODE,
+                        Config.IMU_MODE,
+                        Config.CLASSIFIER_MODE])
 
         # Subscribe for IMU
-        self.send(self.lib.ble_cmd_attclient_attribute_write(self.myo_to_connect.connectionId,
-                                                             ServiceHandles.IMUDataDescriptor,
-                                                             Final.subscribe_payload))
+        self.write_att(self.myo_to_connect.connectionId,
+                       ServiceHandles.IMUDataDescriptor,
+                       Final.subscribe_payload)
 
         # Subscribe for EMG
-        self.send(self.lib.ble_cmd_attclient_attribute_write(self.myo_to_connect.connectionId,
-                                                             ServiceHandles.EmgData0Descriptor,
-                                                             Final.subscribe_payload))
-        self.send(self.lib.ble_cmd_attclient_attribute_write(self.myo_to_connect.connectionId,
-                                                             ServiceHandles.EmgData1Descriptor,
-                                                             Final.subscribe_payload))
-        self.send(self.lib.ble_cmd_attclient_attribute_write(self.myo_to_connect.connectionId,
-                                                             ServiceHandles.EmgData2Descriptor,
-                                                             Final.subscribe_payload))
-        self.send(self.lib.ble_cmd_attclient_attribute_write(self.myo_to_connect.connectionId,
-                                                             ServiceHandles.EmgData3Descriptor,
-                                                             Final.subscribe_payload))
+        self.write_att(self.myo_to_connect.connectionId,
+                       ServiceHandles.EmgData0Descriptor,
+                       Final.subscribe_payload)
+        self.write_att(self.myo_to_connect.connectionId,
+                       ServiceHandles.EmgData1Descriptor,
+                       Final.subscribe_payload)
+        self.write_att(self.myo_to_connect.connectionId,
+                       ServiceHandles.EmgData2Descriptor,
+                       Final.subscribe_payload)
+        self.write_att(self.myo_to_connect.connectionId,
+                       ServiceHandles.EmgData3Descriptor,
+                       Final.subscribe_payload)
 
         self.myos.append(self.myo_to_connect)
         print("Myo ready", self.myo_to_connect.connectionId, self.myo_to_connect.address)
@@ -265,21 +287,14 @@ class MyoDriver:
         self.connected = False
         print()
 
-    def run(self, myo_amount):
-        self.disconnect_all()
-        while len(self.myos) < myo_amount:
-            print("CONNECTING MYO " + str(len(self.myos) + 1) + " OUT OF " + str(myo_amount))
-            print()
-            self.add_myo_connection()
-
     def get_info(self):
         print("Getting myo info")
         print()
         for myo in self.myos:
-            self.send(self.lib.ble_cmd_attclient_read_by_handle(myo.connectionId,
-                                                                ServiceHandles.DeviceName))
-            self.send(self.lib.ble_cmd_attclient_read_by_handle(myo.connectionId,
-                                                                ServiceHandles.FirmwareVersionCharacteristic))
+            self.read_att(myo.connectionId,
+                          ServiceHandles.DeviceName)
+            self.read_att(myo.connectionId,
+                          ServiceHandles.FirmwareVersionCharacteristic)
         while not self._myos_ready():
             self.receive()
         print("Myo list:")
@@ -292,3 +307,10 @@ class MyoDriver:
             if not m.ready():
                 return False
         return True
+
+    def run(self, myo_amount):
+        self.disconnect_all()
+        while len(self.myos) < myo_amount:
+            print("CONNECTING MYO " + str(len(self.myos) + 1) + " OUT OF " + str(myo_amount))
+            print()
+            self.add_myo_connection()
