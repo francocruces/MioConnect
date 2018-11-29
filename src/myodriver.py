@@ -7,7 +7,6 @@ from src.public.myohw import *
 from src.myo import Myo
 from src.config import Config
 from pythonosc import udp_client
-from pythonosc import osc_message
 
 
 class MyoDriver:
@@ -267,7 +266,7 @@ class MyoDriver:
         print()
 
     def run(self, myo_amount):
-        myo_driver.disconnect_all()
+        self.disconnect_all()
         while len(self.myos) < myo_amount:
             print("CONNECTING MYO " + str(len(self.myos) + 1) + " OUT OF " + str(myo_amount))
             print()
@@ -293,23 +292,3 @@ class MyoDriver:
             if not m.ready():
                 return False
         return True
-
-
-if __name__ == '__main__':
-    myo_driver = None
-    try:
-        myo_driver = MyoDriver()
-        myo_driver.run(Config.MYO_AMOUNT)
-        if Config.GET_MYO_INFO:
-            myo_driver.get_info()
-        print("Ready for data")
-        while True:
-            myo_driver.receive()
-    except KeyboardInterrupt:
-        pass
-    except serial.serialutil.SerialException as err:
-        print("ERROR: Couldn't open port. Please close MyoConnect and any program using this serial port.")
-    finally:
-        if myo_driver is not None:
-            myo_driver.disconnect_all()
-            print("Disconnected.")

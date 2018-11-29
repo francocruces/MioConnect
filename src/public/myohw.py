@@ -30,10 +30,6 @@ This code is a partial transcription from myohw.h file released by Thalmic Labs 
 https://github.com/thalmiclabs/myo-bluetooth/blob/master/myohw.h
 """
 
-from enum import Enum
-
-# TODO: Parse myohw.h and refactor.
-
 
 class Final:
 
