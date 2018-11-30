@@ -1,8 +1,9 @@
 import re
 import time
-from serial.tools.list_ports import comports
-from src.public.bglib import BGLib
 import serial
+from serial.tools.list_ports import comports
+
+from src.public.bglib import BGLib
 from src.public.myohw import *
 from src.myo import Myo
 from src.config import Config
@@ -25,17 +26,16 @@ class MyoDriver:
         self.scanning = False
         self.connected = False
 
-    @staticmethod
-    def _detect_port():
+    def _detect_port(self):
         """
         Detect COM port.
         :return: COM port with the expected ID
         """
-        print("Detecting available ports")
+        self.print_status("Detecting available ports")
         for p in comports():
             if re.search(r'PID=2458:0*1', p[2]):
-                print('Port detected: ', p[0])
-                print()
+                self.print_status('Port detected: ', p[0]) if Config.VERBOSE else ""
+                self.print_status()
                 return p[0]
         return None
 
@@ -71,12 +71,12 @@ class MyoDriver:
         Handler for ble_evt_gap_scan_response event.
         """
         if self.scanning and not self.myo_to_connect:
-            print("Device found", payload['sender'])
+            self.print_status("Device found", payload['sender'])
             if payload['data'].endswith(bytes(Final.myo_id)):
                 if not self._has_paired_with(payload['sender']):
                     self.myo_to_connect = Myo(payload['sender'])
-                    print("Myo found", self.myo_to_connect.address)
-                    print()
+                    self.print_status("Myo found", self.myo_to_connect.address)
+                    self.print_status()
                     self.scanning = False
 
     def _has_paired_with(self, address):
@@ -96,17 +96,17 @@ class MyoDriver:
         """
         Handle for ble_evt_connection_disconnected event.
         """
-        print("Disconnected:", payload)
+        self.print_status("Disconnected:", payload)
 
     def handle_connection_status(self, e, payload):
         """
         Handler for ble_evt_connection_status event.
         """
         if payload['address'] == self.myo_to_connect.address and payload['flags'] == 5:
-            # print("Connection status: ", payload)
+            # self.print_status("Connection status: ", payload)
             self.connected = True
             self.myo_to_connect.set_id(payload['connection'])
-            print("Connected with id", self.myo_to_connect.connectionId)
+            self.print_status("Connected with id", self.myo_to_connect.connectionId)
 
     def handle_attribute_value(self, e, payload):
         """
@@ -130,7 +130,7 @@ class MyoDriver:
                 myo.handle_attribute_value(payload)
             if not payload['atthandle'] == ServiceHandles.DeviceName and \
                     not payload['atthandle'] == ServiceHandles.FirmwareVersionCharacteristic:
-                print(e, payload)
+                self.print_status(e, payload)
 
     def handle_emg(self, payload):
         """
@@ -197,8 +197,8 @@ class MyoDriver:
         self.lib.ble_evt_attclient_attribute_value.add(self.handle_attribute_value)
         self.lib.ble_evt_connection_disconnected.add(self.handle_disconnect)
         self.lib.ble_evt_connection_status.add(self.handle_connection_status)
-        # self.lib.ble_rsp_attclient_read_by_handle.add(print)
-        # self.bglib.ble_rsp_attclient_attribute_write.add(print)
+        # self.lib.ble_rsp_attclient_read_by_handle.add(self.print_status)
+        # self.bglib.ble_rsp_attclient_attribute_write.add(self.print_status)
 
     def disconnect_all(self):
         """
@@ -217,7 +217,7 @@ class MyoDriver:
         self.set_handlers()
 
         # Discover
-        print("Scanning")
+        self.print_status("Scanning")
         self.send(self.lib.ble_cmd_gap_discover(1))
 
         # Await response
@@ -229,16 +229,16 @@ class MyoDriver:
         self.send(self.lib.ble_cmd_gap_end_procedure())
 
         # Direct connection
-        print("Connecting to", self.myo_to_connect.address)
+        self.print_status("Connecting to", self.myo_to_connect.address)
         self.send(self.lib.ble_cmd_gap_connect_direct(self.myo_to_connect.address, *Final.direct_connection_tail))
 
         # Await response
         while self.myo_to_connect.connectionId is None or not self.connected:
             self.lib.check_activity(self.serial)
 
-        # Notify successful connection with print and vibration
-        print("Connection successful. Setting up...")
-        print()
+        # Notify successful connection with self.print_status and vibration
+        self.print_status("Connection successful. Setting up...")
+        self.print_status()
         self.write_att(self.myo_to_connect.connectionId,
                        ServiceHandles.CommandCharacteristic,
                        [MyoCommand.myohw_command_vibrate,
@@ -282,14 +282,14 @@ class MyoDriver:
 
         self.myos.append(self.myo_to_connect)
         print("Myo ready", self.myo_to_connect.connectionId, self.myo_to_connect.address)
+        print()
         self.myo_to_connect = None
         self.scanning = False
         self.connected = False
-        print()
 
     def get_info(self):
-        print("Getting myo info")
-        print()
+        self.print_status("Getting myo info")
+        self.print_status()
         for myo in self.myos:
             self.read_att(myo.connectionId,
                           ServiceHandles.DeviceName)
@@ -311,6 +311,10 @@ class MyoDriver:
     def run(self, myo_amount):
         self.disconnect_all()
         while len(self.myos) < myo_amount:
-            print("CONNECTING MYO " + str(len(self.myos) + 1) + " OUT OF " + str(myo_amount))
+            print("*** Connecting myo " + str(len(self.myos) + 1) + " out of " + str(myo_amount) + " ***")
             print()
             self.add_myo_connection()
+
+    def print_status(self, *args):
+        if Config.VERBOSE:
+            print(*args)
