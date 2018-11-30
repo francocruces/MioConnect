@@ -15,4 +15,3 @@ class Config:
     GET_MYO_INFO = True
 
     MESSAGE_DELAY = 0.1
-

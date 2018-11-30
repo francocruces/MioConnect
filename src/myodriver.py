@@ -47,10 +47,9 @@ class MyoDriver:
 
     def send(self, msg):
         """
-        Send given message through serial.
+        Send given message through serial. A small delay is required for the Myo to process them correctly
         :param msg: packed message to send
         """
-        # A small delay is required for the Myo to process them correctly
         time.sleep(Config.MESSAGE_DELAY)
         self.lib.send_command(self.serial, msg)
 
@@ -288,6 +287,9 @@ class MyoDriver:
         self.connected = False
 
     def get_info(self):
+        """
+        Send read attribute messages and await answer.
+        """
         self.print_status("Getting myo info")
         self.print_status()
         for myo in self.myos:
@@ -303,12 +305,19 @@ class MyoDriver:
         print()
 
     def _myos_ready(self):
+        """
+        :return: True if every myo has its data set, False otherwise.
+        """
         for m in self.myos:
             if not m.ready():
                 return False
         return True
 
     def run(self, myo_amount):
+        """
+        Main. Disconnects possible connections and starts as many connections as needed.
+        :param myo_amount: amount of myos to detect before EMG/IMU stream starts.
+        """
         self.disconnect_all()
         while len(self.myos) < myo_amount:
             print("*** Connecting myo " + str(len(self.myos) + 1) + " out of " + str(myo_amount) + " ***")
@@ -316,5 +325,8 @@ class MyoDriver:
             self.add_myo_connection()
 
     def print_status(self, *args):
+        """
+        Printer function for VERBOSE support.
+        """
         if Config.VERBOSE:
             print(*args)
