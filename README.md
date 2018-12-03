@@ -11,6 +11,13 @@ of people developing their own direct connections and understanding the bluetoot
 
 # Requirements
 
+This project runs on Python 3. Requirements are inside `requirements.txt` file.
+
+* pyserial
+* python-osc
+
+You can easily install then via `pip install -r requirements.txt`.
+
 # How to run
 The file `main.py` contains the main loop for the application. Which instantiates a MyoDriver object and starts the
 main procedure.
