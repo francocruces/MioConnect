@@ -49,6 +49,26 @@ in which the OSC protocol is implemented
 * An infinite loop lets the application listen for events 
 * A keyboard interrupt (Ctrl+C) will trigger disconnect messages and end the program
 
+# Project files
+
+## `main.py`
+
+This file contains the main loop for the application.
+
+## `src`
+
+* `config.py`: Settings for the application. Details under "How to run" section.
+* `myo.py`: Class for a myo, handles device info and prints it nicely
+* `myodriver.py`: Driver for myo connection and data handling.
+
+## `src/public`
+
+Contains files that are taken from another project following their respective licenses.
+
+* `bglib.py`:  BGLib implementations for Bluegiga BLE112 Bluetooth Smart module.
+* `myohw.py`: A partial transcription of myohw.h file released by Thalmic Labs Inc.
+
+
 # Issues
 
 * Not tested on Linux or OS X, but should work the same way.

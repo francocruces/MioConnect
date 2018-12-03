@@ -26,7 +26,7 @@ SOFTWARE EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 """
-This code is a partial transcription from myohw.h file released by Thalmic Labs Inc.
+This code is a partial transcription of myohw.h file released by Thalmic Labs Inc.
 https://github.com/thalmiclabs/myo-bluetooth/blob/master/myohw.h
 """
 
