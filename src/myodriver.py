@@ -26,6 +26,9 @@ class MyoDriver:
         self.scanning = False
         self.connected = False
 
+        # Add handlers for expected events
+        self.set_handlers()
+
     def _detect_port(self):
         """
         Detect COM port.
@@ -212,8 +215,6 @@ class MyoDriver:
         """
         Procedure for connection with the Myo Armband. Scans, connects, disables sleep and starts EMG stream.
         """
-        # Add handlers for expected events
-        self.set_handlers()
 
         # Discover
         self.print_status("Scanning")
@@ -278,6 +279,8 @@ class MyoDriver:
         self.write_att(self.myo_to_connect.connectionId,
                        ServiceHandles.EmgData3Descriptor,
                        Final.subscribe_payload)
+
+        # TODO: Subscribe to classifier events.
 
         self.myos.append(self.myo_to_connect)
         print("Myo ready", self.myo_to_connect.connectionId, self.myo_to_connect.address)
