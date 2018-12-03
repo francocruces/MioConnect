@@ -123,6 +123,11 @@ class MyoDriver:
         imu_handles = [
             ServiceHandles.IMUDataCharacteristic
         ]
+        myo_handles = [
+            ServiceHandles.DeviceName,
+            ServiceHandles.FirmwareVersionCharacteristic,
+            ServiceHandles.BatteryCharacteristic
+        ]
         if payload['atthandle'] in emg_handles:
             self.handle_emg(payload)
         elif payload['atthandle'] in imu_handles:
@@ -130,8 +135,7 @@ class MyoDriver:
         else:
             for myo in self.myos:
                 myo.handle_attribute_value(payload)
-            if not payload['atthandle'] == ServiceHandles.DeviceName and \
-                    not payload['atthandle'] == ServiceHandles.FirmwareVersionCharacteristic:
+            if payload['atthandle'] not in myo_handles:
                 self.print_status(e, payload)
 
     def handle_emg(self, payload):
@@ -300,6 +304,8 @@ class MyoDriver:
                           ServiceHandles.DeviceName)
             self.read_att(myo.connectionId,
                           ServiceHandles.FirmwareVersionCharacteristic)
+            self.read_att(myo.connectionId,
+                          ServiceHandles.BatteryCharacteristic)
         while not self._myos_ready():
             self.receive()
         print("Myo list:")

@@ -70,6 +70,9 @@ class ServiceHandles:
     """
     # ControlService
     MyoInfoCharacteristic = 0x0
+    DeviceName = 0x3
+    BatteryCharacteristic = 0x11
+    BatteryDescriptor = 0x12
     FirmwareVersionCharacteristic = 0x17
     CommandCharacteristic = 0x19
 
@@ -78,8 +81,8 @@ class ServiceHandles:
     IMUDataDescriptor = 0x1d
     # MotionEventCharacteristic
 
-    ClassifierService = 0x0003
-    ClassifierEventCharacteristic = 0x0103
+    # ClassifierService
+    ClassifierEventCharacteristic = 0x0023
 
     EmgData0Characteristic = 0x2b
     EmgData1Characteristic = 0x2e
@@ -91,7 +94,7 @@ class ServiceHandles:
     EmgData2Descriptor = 0x32
     EmgData3Descriptor = 0x35
 
-    DeviceName = 0x3
+
 
 
 class StandardServices:

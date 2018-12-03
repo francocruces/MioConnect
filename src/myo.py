@@ -1,4 +1,5 @@
 from src.public.myohw import *
+import struct
 
 
 class Myo:
@@ -11,6 +12,7 @@ class Myo:
         self.connectionId = None
         self.device_name = None
         self.firmware_version = None
+        self.battery_level = None  # TODO: Normalize to 0-100
 
     def set_id(self, connection_id):
         """
@@ -32,18 +34,22 @@ class Myo:
                 # print("Firmware version", payload['value'])
                 if not payload['value'] == b'\x01\x00\x05\x00\xb2\x07\x02\x00':
                     print("MYO WITH UNEXPECTED FIRMWARE, MAY NOT BEHAVE PROPERLY.", payload['value'])
+            elif payload['atthandle'] == ServiceHandles.BatteryCharacteristic:
+                self.battery_level = payload['value']
 
     def ready(self):
         """
         :return:True if every field is valid, False otherwise.
         """
         return self.address is not None and \
-               self.connectionId is not None and \
-               self.device_name is not None and \
-               self.firmware_version is not None
+            self.connectionId is not None and \
+            self.device_name is not None and \
+            self.firmware_version is not None and \
+            self.battery_level is not None
 
     def __str__(self):
         return "Myo: " + str(self.device_name) + ", " + \
+               "Battery level: " + str(*struct.unpack('b', self.battery_level)) + ", " + \
                "Connection: " + str(self.connectionId) + ", " + \
                "Address: " + str(self.address) + ", " + \
                "Firmware: " + str(self.firmware_version)
