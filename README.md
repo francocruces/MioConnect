@@ -49,6 +49,12 @@ in which the OSC protocol is implemented
 * An infinite loop lets the application listen for events 
 * A keyboard interrupt (Ctrl+C) will trigger disconnect messages and end the program
 
+# Issues
+
+* Not tested on Linux or OS X, but should work the same way.
+* There's currently no way to enter Dongle name manually, if anything goes wrong, you should hardcode it at serial
+initialization
+
 # References
 * Myo Bluetooth Protocol Release 
 https://developerblog.myo.com/myo-bluetooth-spec-released/
