@@ -16,7 +16,7 @@ This project runs on Python 3. Requirements are inside `requirements.txt` file.
 * pyserial
 * python-osc
 
-You can easily install then via `pip install -r requirements.txt`.
+You can easily install them via `pip install -r requirements.txt`.
 
 # How to run
 The file `main.py` contains the main loop for the application. Which instantiates a MyoDriver object and starts the
