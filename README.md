@@ -27,6 +27,7 @@ All relevant decisions are written in a single config file `src/config.py`. Thes
 * EMG mode (send data, raw data, disabled, ...)
 * IMU mode (send data, send events, disabled, ...)
 * Classifier mode (enabled, disabled)
+* Turn off (deep sleep) at KeyboardInterrupt
 * Print EMG/IMU through console
 * Verbose output
 * Store and notify Myo Info after connections are made
