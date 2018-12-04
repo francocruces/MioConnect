@@ -108,7 +108,7 @@ class MyoDriver:
             # self.print_status("Connection status: ", payload)
             self.connected = True
             self.myo_to_connect.set_id(payload['connection'])
-            self.print_status("Connected with id", self.myo_to_connect.connectionId)
+            self.print_status("Connected with id", self.myo_to_connect.connection_id)
 
     def handle_attribute_value(self, e, payload):
         """
@@ -237,27 +237,27 @@ class MyoDriver:
         self.send(self.lib.ble_cmd_gap_connect_direct(self.myo_to_connect.address, *Final.direct_connection_tail))
 
         # Await response
-        while self.myo_to_connect.connectionId is None or not self.connected:
+        while self.myo_to_connect.connection_id is None or not self.connected:
             self.lib.check_activity(self.serial)
 
         # Notify successful connection with self.print_status and vibration
         self.print_status("Connection successful. Setting up...")
         self.print_status()
-        self.write_att(self.myo_to_connect.connectionId,
+        self.write_att(self.myo_to_connect.connection_id,
                        ServiceHandles.CommandCharacteristic,
                        [MyoCommand.myohw_command_vibrate,
                         0x01,
                         VibrationType.myohw_vibration_short])
 
         # Disable sleep
-        self.write_att(self.myo_to_connect.connectionId,
+        self.write_att(self.myo_to_connect.connection_id,
                        ServiceHandles.CommandCharacteristic,
                        [MyoCommand.myohw_command_set_sleep_mode,
                         0x01,
                         SleepMode.myohw_sleep_mode_never_sleep])
 
         # Start EMG
-        self.write_att(self.myo_to_connect.connectionId,
+        self.write_att(self.myo_to_connect.connection_id,
                        ServiceHandles.CommandCharacteristic,
                        [MyoCommand.myohw_command_set_mode,
                         0x03,
@@ -266,28 +266,28 @@ class MyoDriver:
                         Config.CLASSIFIER_MODE])
 
         # Subscribe for IMU
-        self.write_att(self.myo_to_connect.connectionId,
+        self.write_att(self.myo_to_connect.connection_id,
                        ServiceHandles.IMUDataDescriptor,
                        Final.subscribe_payload)
 
         # Subscribe for EMG
-        self.write_att(self.myo_to_connect.connectionId,
+        self.write_att(self.myo_to_connect.connection_id,
                        ServiceHandles.EmgData0Descriptor,
                        Final.subscribe_payload)
-        self.write_att(self.myo_to_connect.connectionId,
+        self.write_att(self.myo_to_connect.connection_id,
                        ServiceHandles.EmgData1Descriptor,
                        Final.subscribe_payload)
-        self.write_att(self.myo_to_connect.connectionId,
+        self.write_att(self.myo_to_connect.connection_id,
                        ServiceHandles.EmgData2Descriptor,
                        Final.subscribe_payload)
-        self.write_att(self.myo_to_connect.connectionId,
+        self.write_att(self.myo_to_connect.connection_id,
                        ServiceHandles.EmgData3Descriptor,
                        Final.subscribe_payload)
 
         # TODO: Subscribe to classifier events.
 
         self.myos.append(self.myo_to_connect)
-        print("Myo ready", self.myo_to_connect.connectionId, self.myo_to_connect.address)
+        print("Myo ready", self.myo_to_connect.connection_id, self.myo_to_connect.address)
         print()
         self.myo_to_connect = None
         self.scanning = False
@@ -300,11 +300,11 @@ class MyoDriver:
         self.print_status("Getting myo info")
         self.print_status()
         for myo in self.myos:
-            self.read_att(myo.connectionId,
+            self.read_att(myo.connection_id,
                           ServiceHandles.DeviceName)
-            self.read_att(myo.connectionId,
+            self.read_att(myo.connection_id,
                           ServiceHandles.FirmwareVersionCharacteristic)
-            self.read_att(myo.connectionId,
+            self.read_att(myo.connection_id,
                           ServiceHandles.BatteryCharacteristic)
         while not self._myos_ready():
             self.receive()
@@ -339,3 +339,9 @@ class MyoDriver:
         """
         if Config.VERBOSE:
             print(*args)
+
+    def deep_sleep_all(self):
+        for m in self.myos:
+            self.write_att(m.connection_id,
+                           ServiceHandles.CommandCharacteristic,
+                           [MyoCommand.myohw_command_deep_sleep])

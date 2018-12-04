@@ -17,5 +17,7 @@ except serial.serialutil.SerialException as err:
     print("ERROR: Couldn't open port. Please close MyoConnect and any program using this serial port.")
 finally:
     if myo_driver is not None:
+        print("Disconnecting...")
+        myo_driver.deep_sleep_all()
         myo_driver.disconnect_all()
         print("Disconnected.")

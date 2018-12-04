@@ -69,6 +69,11 @@ Contains files that are taken from another project following their respective li
 * `myohw.py`: A partial transcription of myohw.h file released by Thalmic Labs Inc.
 
 
+# Turn off Myo
+The protocol provides the `deep_sleep` command (see `myohw`), according to the release notes, the armband will go into
+a state with basically everything off and can stay in that state for months. The only way to turn it back on is plugging
+it via USB (as MyoConnect would).
+
 # Issues
 
 * Not tested on Linux or OS X, but should work the same way.

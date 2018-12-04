@@ -9,23 +9,23 @@ class Myo:
 
     def __init__(self, address):
         self.address = address
-        self.connectionId = None
+        self.connection_id = None
         self.device_name = None
         self.firmware_version = None
-        self.battery_level = None  # TODO: Normalize to 0-100
+        self.battery_level = None
 
     def set_id(self, connection_id):
         """
         Set connection id, required for every write/read attribute message.
         """
-        self.connectionId = connection_id
+        self.connection_id = connection_id
         return self
 
     def handle_attribute_value(self, payload):
         """
         When attribute values are not EMG/IMU related, are a Myo attribute being read.
         """
-        if self.connectionId == payload['connection']:
+        if self.connection_id == payload['connection']:
             if payload['atthandle'] == ServiceHandles.DeviceName:
                 self.device_name = payload['value'].decode()
                 # print("Device name", payload['value'].decode())
@@ -42,14 +42,14 @@ class Myo:
         :return:True if every field is valid, False otherwise.
         """
         return self.address is not None and \
-            self.connectionId is not None and \
-            self.device_name is not None and \
-            self.firmware_version is not None and \
-            self.battery_level is not None
+               self.connection_id is not None and \
+               self.device_name is not None and \
+               self.firmware_version is not None and \
+               self.battery_level is not None
 
     def __str__(self):
         return "Myo: " + str(self.device_name) + ", " + \
                "Battery level: " + str(*struct.unpack('b', self.battery_level)) + ", " + \
-               "Connection: " + str(self.connectionId) + ", " + \
+               "Connection: " + str(self.connection_id) + ", " + \
                "Address: " + str(self.address) + ", " + \
                "Firmware: " + str(self.firmware_version)
