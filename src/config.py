@@ -8,6 +8,8 @@ class Config:
     IMU_MODE = ImuMode.myohw_imu_mode_send_data
     CLASSIFIER_MODE = ClassifierMode.myohw_classifier_mode_disabled
 
+    DEEP_SLEEP_AT_DISCONNECT = False
+
     PRINT_EMG = False
     PRINT_IMU = False
 

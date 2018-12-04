@@ -18,6 +18,7 @@ except serial.serialutil.SerialException as err:
 finally:
     if myo_driver is not None:
         print("Disconnecting...")
-        myo_driver.deep_sleep_all()
+        if Config.DEEP_SLEEP_AT_DISCONNECT:
+            myo_driver.deep_sleep_all()
         myo_driver.disconnect_all()
         print("Disconnected.")
