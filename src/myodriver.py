@@ -2,6 +2,7 @@ import re
 import time
 import serial
 from serial.tools.list_ports import comports
+import struct
 
 from src.public.bglib import BGLib
 from src.public.myohw import *
@@ -17,7 +18,7 @@ class MyoDriver:
 
     def __init__(self):
         self.serial = serial.Serial(port=self._detect_port(), baudrate=9600, dsrdtr=1)
-        self.osc = udp_client.SimpleUDPClient('localhost', 3000)
+        self.osc = udp_client.SimpleUDPClient(Config.OSC_ADDRESS, Config.OSC_PORT)
         self.lib = BGLib()
 
         self.myos = []
@@ -150,7 +151,7 @@ class MyoDriver:
         data = payload['value'][0:8]
         builder = udp_client.OscMessageBuilder("/myo/emg")
         builder.add_arg(str(payload['connection']), 's')
-        for i in data:
+        for i in struct.unpack('ii', data):
             builder.add_arg(i, 'i')
         self.osc.send(builder.build())
 
@@ -169,12 +170,11 @@ class MyoDriver:
         """
         if Config.PRINT_IMU:
             print("IMU", payload['connection'], payload['atthandle'], payload['value'])
-
         # Send orientation
         data = payload['value'][0:8]
         builder = udp_client.OscMessageBuilder("/myo/orientation")
         builder.add_arg(str(payload['connection']), 's')
-        for i in data:
+        for i in struct.unpack('hhhh', data):
             builder.add_arg(i, 'f')
         self.osc.send(builder.build())
 
@@ -182,7 +182,7 @@ class MyoDriver:
         data = payload['value'][8:14]
         builder = udp_client.OscMessageBuilder("/myo/accel")
         builder.add_arg(str(payload['connection']), 's')
-        for i in data:
+        for i in struct.unpack('hhh', data):
             builder.add_arg(i, 'f')
         self.osc.send(builder.build())
 
@@ -190,7 +190,7 @@ class MyoDriver:
         data = payload['value'][14:20]
         builder = udp_client.OscMessageBuilder("/myo/gyro")
         builder.add_arg(str(payload['connection']), 's')
-        for i in data:
+        for i in struct.unpack('hhh', data):
             builder.add_arg(i, 'f')
         self.osc.send(builder.build())
 
