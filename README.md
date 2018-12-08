@@ -25,9 +25,9 @@ the main procedure.
 Run `mio_connect.py -h` to get help on the software usage. You can add the following commands:
 * `-h` or `--help` to see this list
 * `-s` or `--shutdown` to turn off (deep_sleep) the expected amount of myos
-* `-n <amount>` or `-nmyo <amount>` to set the amount of devices to expect
-* `-a <address>` or `-address <address>` to set OSC address
-* `-p <port_number>` or `-port <port_number>` to set OSC port
+* `-n <amount>` or `--nmyo <amount>` to set the amount of devices to expect
+* `-a <address>` or `--address <address>` to set OSC address
+* `-p <port_number>` or `--port <port_number>` to set OSC port
 
 Default configuration is written in a single file: `src/config.py`. These settings include:
 * Amount of myos to detect
