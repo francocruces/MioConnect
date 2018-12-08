@@ -7,6 +7,7 @@ import struct
 from src.public.bglib import BGLib
 from src.public.myohw import *
 from src.myo import Myo
+from src.data_handler import DataHandler
 from pythonosc import udp_client
 
 
@@ -22,6 +23,7 @@ class MyoDriver:
         print("OSC Address: " + str(self.config.OSC_ADDRESS))
         print("OSC Port: " + str(self.config.OSC_PORT))
         print()
+        self.data_handler = DataHandler(self.osc, self.config)
 
         self.lib = BGLib()
 
@@ -134,69 +136,14 @@ class MyoDriver:
             ServiceHandles.BatteryCharacteristic
         ]
         if payload['atthandle'] in emg_handles:
-            self.handle_emg(payload)
+            self.data_handler.handle_emg(payload)
         elif payload['atthandle'] in imu_handles:
-            self.handle_imu(payload)
+            self.data_handler.handle_imu(payload)
         else:
             for myo in self.myos:
                 myo.handle_attribute_value(payload)
             if payload['atthandle'] not in myo_handles:
                 self.print_status(e, payload)
-
-    def handle_emg(self, payload):
-        """
-        Handle EMG data.
-        :param payload: emg data as two samples in a single pack.
-        """
-        if self.config.PRINT_EMG:
-            print("EMG", payload['connection'], payload['atthandle'], payload['value'])
-
-        # Send first sample
-        data = payload['value'][0:8]
-        builder = udp_client.OscMessageBuilder("/myo/emg")
-        builder.add_arg(str(payload['connection']), 's')
-        for i in struct.unpack('ii', data):
-            builder.add_arg(i, 'i')
-        self.osc.send(builder.build())
-
-        # Send second message
-        data = payload['value'][8:16]
-        builder = udp_client.OscMessageBuilder("/myo/emg")
-        builder.add_arg(str(payload['connection']), 's')
-        for i in data:
-            builder.add_arg(i, 'i')
-        self.osc.send(builder.build())
-
-    def handle_imu(self, payload):
-        """
-        Handle IMU data.
-        :param payload: imu data in a single byte array.
-        """
-        if self.config.PRINT_IMU:
-            print("IMU", payload['connection'], payload['atthandle'], payload['value'])
-        # Send orientation
-        data = payload['value'][0:8]
-        builder = udp_client.OscMessageBuilder("/myo/orientation")
-        builder.add_arg(str(payload['connection']), 's')
-        for i in struct.unpack('hhhh', data):
-            builder.add_arg(i, 'f')
-        self.osc.send(builder.build())
-
-        # Send accelerometer
-        data = payload['value'][8:14]
-        builder = udp_client.OscMessageBuilder("/myo/accel")
-        builder.add_arg(str(payload['connection']), 's')
-        for i in struct.unpack('hhh', data):
-            builder.add_arg(i, 'f')
-        self.osc.send(builder.build())
-
-        # Send gyroscope
-        data = payload['value'][14:20]
-        builder = udp_client.OscMessageBuilder("/myo/gyro")
-        builder.add_arg(str(payload['connection']), 's')
-        for i in struct.unpack('hhh', data):
-            builder.add_arg(i, 'f')
-        self.osc.send(builder.build())
 
     def set_handlers(self):
         """

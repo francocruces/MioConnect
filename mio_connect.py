@@ -7,6 +7,8 @@ import sys
 
 def main(argv):
     config = Config()
+
+    # Get options and arguments
     try:
         opts, args = getopt.getopt(argv, 'hsn:a:p:v', ['help', 'shutdown', 'nmyo', 'address', 'port', 'verbose'])
     except getopt.GetoptError:
@@ -30,20 +32,33 @@ def main(argv):
     # Run
     myo_driver = None
     try:
+        # Init
         myo_driver = MyoDriver(config)
+
+        # Connect
         myo_driver.run()
+
         if turnoff:
+            # Turn off
             myo_driver.deep_sleep_all()
             return
+
         if Config.GET_MYO_INFO:
+            # Get info
             myo_driver.get_info()
-        print("Ready for data")
+
+        print("Ready for data.")
+
+        # Receive and handle data
         while True:
             myo_driver.receive()
+
     except KeyboardInterrupt:
-        pass
-    except serial.serialutil.SerialException as err:
+        print("Interrupted.")
+
+    except serial.serialutil.SerialException:
         print("ERROR: Couldn't open port. Please close MyoConnect and any program using this serial port.")
+
     finally:
         if myo_driver is not None:
             if Config.DEEP_SLEEP_AT_KEYBOARD_INTERRUPT:
