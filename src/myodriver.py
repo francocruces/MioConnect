@@ -61,15 +61,18 @@ class MyoDriver:
             Handler for ble_evt_connection_status event.
             """
             print("Disconnected:", payload)
-            print(payload['connection'])
-            print(payload['reason'])
-            time.sleep(5)
+
             if myo.connection_id == payload['connection']:
+                myo.set_connected(False)
                 if payload['reason'] == 574:
-                    # Connection Failed to be Established
+                    print("Disconnected. Reason: Connection Failed to be Established")
                     pass
+                if payload['reason'] == 534:
+                    print("Disconnected. Reason: Connection Terminated by Local Host")
                 if payload['reason'] == 520:
-                    # Connection Timeout
+                    print("Disconnected. Reason: Connection Timeout")
+                    time.sleep(5)
+                    self.direct_connect(myo)
                     pass
                 # TODO: Retry.
         return handle_disconnect
@@ -149,10 +152,11 @@ class MyoDriver:
         self.bluetooth.add_disconnected_handler(self.create_disconnect_handle(self.myo_to_connect))
 
         # Direct connection
+        self.myos.append(self.myo_to_connect)
         self.direct_connect(self.myo_to_connect)
         self.myo_to_connect = None
 
-    def direct_connect(self, myo_to_connect):
+    def direct_connect(self, myo_to_connect, timeout=None):
         # TODO: Add timeout.
         # Direct connection
         self.print_status("Connecting to", myo_to_connect.address)
@@ -170,7 +174,9 @@ class MyoDriver:
         # Disable sleep
         self.bluetooth.disable_sleep(myo_to_connect.connection_id)
 
-        self.myos.append(myo_to_connect)
+        # Enable data and subscribe
+        self.bluetooth.enable_data(myo_to_connect.connection_id, self.config)
+
         print("Myo ready", myo_to_connect.connection_id, myo_to_connect.address)
         print()
 

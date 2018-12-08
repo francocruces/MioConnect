@@ -95,7 +95,6 @@ class ServiceHandles:
     EmgData3Descriptor = 0x35
 
 
-
 class StandardServices:
     BatteryService = 0x180f  # Battery service
     BatteryLevelCharacteristic = 0x2a19  # Current battery level information. Read/notify characteristic.

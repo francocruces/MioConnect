@@ -1,5 +1,6 @@
 from src.public.myohw import *
 import struct
+import time
 
 
 class Myo:
@@ -14,6 +15,7 @@ class Myo:
         self.firmware_version = None
         self.battery_level = None
         self.connected = False
+        self.time_start_connecting = None
 
     def set_id(self, connection_id):
         """
@@ -23,6 +25,8 @@ class Myo:
         return self
 
     def set_connected(self, connected):
+        if not connected:
+            self.time_start_connecting = time.time()
         self.connected = connected
 
     def handle_attribute_value(self, payload):
