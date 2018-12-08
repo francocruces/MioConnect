@@ -53,9 +53,17 @@ def main(argv):
 
 
 def print_usage():
-    # TODO: Implement help message.
-    print("[Help]")
-    pass
+    message = """usage: python mio_connect.py [-h | --help] [-s | --shutdown] [-n | --nmyo <amount>] [-a | --address \
+<address>] [-p | --port <port_number>]
+
+Options and arguments:
+    -h | --help` to display this message
+    -s | --shutdown` to turn off (deep_sleep) the expected amount of myos
+    -n | --nmyo <amount>` to set the amount of devices to expect
+    -a | --address <address>` to set OSC address
+    -p | --port <port_number>` to set OSC port
+"""
+    print(message)
 
 
 if __name__ == "__main__":
