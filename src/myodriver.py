@@ -1,3 +1,4 @@
+import time
 from src.public.myohw import *
 from src.myo import Myo
 from src.bluetooth import Bluetooth
@@ -21,7 +22,6 @@ class MyoDriver:
 
         self.myo_to_connect = None
         self.scanning = False
-        self.connected = False
 
         # Add handlers for expected events
         self.set_handlers()
@@ -53,25 +53,38 @@ class MyoDriver:
         Handler for ble_rsp_gap_connect_direct event.
         """
         if not payload['result'] == 0:
-            raise RuntimeError
+            raise RuntimeError(payload)
 
-    def handle_disconnect(self, e, payload):
-        """
-        Handle for ble_evt_connection_disconnected event.
-        """
-        print("Disconnected:", payload)
-        print(payload['connection'])
-        print(payload['reason'])
+    def create_disconnect_handle(self, myo):
+        def handle_disconnect(e, payload):
+            """
+            Handler for ble_evt_connection_status event.
+            """
+            print("Disconnected:", payload)
+            print(payload['connection'])
+            print(payload['reason'])
+            time.sleep(5)
+            if myo.connection_id == payload['connection']:
+                if payload['reason'] == 574:
+                    # Connection Failed to be Established
+                    pass
+                if payload['reason'] == 520:
+                    # Connection Timeout
+                    pass
+                # TODO: Retry.
+        return handle_disconnect
 
-    def handle_connection_status(self, e, payload):
-        """
-        Handler for ble_evt_connection_status event.
-        """
-        if payload['address'] == self.myo_to_connect.address and payload['flags'] == 5:
-            # self.print_status("Connection status: ", payload)
-            self.connected = True
-            self.myo_to_connect.set_id(payload['connection'])
-            self.print_status("Connected with id", self.myo_to_connect.connection_id)
+    def create_connection_status_handle(self, myo):
+        def handle_connection_status(e, payload):
+            """
+            Handler for ble_evt_connection_status event.
+            """
+            if payload['address'] == myo.address and payload['flags'] == 5:
+                # self.print_status("Connection status: ", payload)
+                myo.set_connected(True)
+                myo.set_id(payload['connection'])
+                self.print_status("Connected with id", myo.connection_id)
+        return handle_connection_status
 
     def handle_attribute_value(self, e, payload):
         """
@@ -108,8 +121,6 @@ class MyoDriver:
         self.bluetooth.add_scan_response_handler(self.handle_discover)
         self.bluetooth.add_connect_response_handler(self.handle_connect)
         self.bluetooth.add_attribute_value_handler(self.handle_attribute_value)
-        self.bluetooth.add_disconnected_handler(self.handle_disconnect)
-        self.bluetooth.add_connection_status_handler(self.handle_connection_status)
 
     def disconnect_all(self):
         """
@@ -133,17 +144,22 @@ class MyoDriver:
         # End gap
         self.bluetooth.end_gap()
 
+        # Add handlers
+        self.bluetooth.add_connection_status_handler(self.create_connection_status_handle(self.myo_to_connect))
+        self.bluetooth.add_disconnected_handler(self.create_disconnect_handle(self.myo_to_connect))
+
         # Direct connection
         self.direct_connect(self.myo_to_connect)
         self.myo_to_connect = None
 
     def direct_connect(self, myo_to_connect):
+        # TODO: Add timeout.
         # Direct connection
         self.print_status("Connecting to", myo_to_connect.address)
         self.bluetooth.direct_connect(myo_to_connect.address)
 
         # Await response
-        while myo_to_connect.connection_id is None or not self.connected:
+        while myo_to_connect.connection_id is None or not myo_to_connect.connected:
             self.receive()
 
         # Notify successful connection with self.print_status and vibration
@@ -157,7 +173,6 @@ class MyoDriver:
         self.myos.append(myo_to_connect)
         print("Myo ready", myo_to_connect.connection_id, myo_to_connect.address)
         print()
-        self.connected = False
 
     def get_info(self):
         """

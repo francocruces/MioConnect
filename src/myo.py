@@ -13,6 +13,7 @@ class Myo:
         self.device_name = None
         self.firmware_version = None
         self.battery_level = None
+        self.connected = False
 
     def set_id(self, connection_id):
         """
@@ -20,6 +21,9 @@ class Myo:
         """
         self.connection_id = connection_id
         return self
+
+    def set_connected(self, connected):
+        self.connected = connected
 
     def handle_attribute_value(self, payload):
         """

@@ -49,6 +49,7 @@ def main(argv):
 
         myo_driver.enable_data_all()
         print("Ready for data.")
+        print()
 
         # Receive and handle data
         while True:
