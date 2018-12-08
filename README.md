@@ -40,6 +40,7 @@ Default configuration is written in a single file: `src/config.py`. These settin
 * `GET_MYO_INFO`: Store and notify Myo Info after connections are made
 * `MESSAGE_DELAY`: Added delay between messages sent to the armband
 * `RETRY_CONNECTION_AFTER`: Time to wait before retrying the connection after unexpected disconnect
+* `MAX_RETRIES`: Maximum amount of retries before giving up
 
 ## What it does
 The code is thoroughly documented and should be easy to follow, but a high-level description will be given:
@@ -57,6 +58,8 @@ The code is thoroughly documented and should be easy to follow, but a high-level
 in which the OSC protocol is implemented
 * An infinite loop lets the application listen for events 
 * A keyboard interrupt (Ctrl+C) will trigger disconnect messages and end the program
+
+If a myo disconnects, an event is received and a reconnection routine will start with provided configuration.
 
 # Project files
 

@@ -25,3 +25,5 @@ class Config:
     OSC_PORT = 3000  # Port for OSC
 
     RETRY_CONNECTION_AFTER = 2  # Reconnection timeout in seconds
+    MAX_RETRIES = None  # Max amount of retries after unexpected disconnect
+

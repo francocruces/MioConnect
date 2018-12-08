@@ -1,3 +1,4 @@
+import sys
 import time
 from src.public.myohw import *
 from src.myo import Myo
@@ -64,6 +65,7 @@ class MyoDriver:
             Handler for ble_evt_connection_status event.
             """
             if myo.connection_id == payload['connection']:
+                print("Connection " + str(payload['connection']) + " lost.")
                 myo.set_connected(False)
                 if payload['reason'] == 574:
                     print("Disconnected. Reason: Connection Failed to be Established.")
@@ -74,9 +76,8 @@ class MyoDriver:
                 else:
                     print("Disconnected:", payload)
                 # Won't return until the connection is established successfully
-                # TODO: Implement max retries.
                 print("Reconnecting...")
-                self.connect_and_retry(myo, self.config.RETRY_CONNECTION_AFTER)
+                self.connect_and_retry(myo, self.config.RETRY_CONNECTION_AFTER, self.config.MAX_RETRIES)
         return handle_disconnect
 
     def create_connection_status_handle(self, myo):
@@ -155,20 +156,26 @@ class MyoDriver:
 
         # Direct connection. Reconnect implements the retry procedure.
         self.myos.append(self.myo_to_connect)
-        self.connect_and_retry(self.myo_to_connect, self.config.RETRY_CONNECTION_AFTER)
+        self.connect_and_retry(self.myo_to_connect, self.config.RETRY_CONNECTION_AFTER, self.config.MAX_RETRIES)
         self.myo_to_connect = None
 
-    def connect_and_retry(self, myo, timeout=None):
+    def connect_and_retry(self, myo, timeout=None, max_retries=None):
         """
         Procedure for a reconnection.
         :param myo: Myo object to connect. Should have its address set
         :param timeout: Time to wait for response
+        :param max_retries: Max retries before exiting the program
         :return: True if connection was successful, false otherwise.
         """
+        retries = 0
         # The subroutine will await the response until timeout is met
         while not self.direct_connect(myo, timeout) and not myo.connected:
+            retries += 1
+            if max_retries is not None and retries > max_retries:
+                print("Max retries reached. Exiting")
+                sys.exit(1)
             print()
-            print("Reconnection failed. Retrying...")
+            print("Reconnection failed for connection " + str(myo.connection_id) + ". Retry " + str(retries) + "...")
         myo.set_connected(True)
         return True
 
@@ -235,7 +242,6 @@ class MyoDriver:
     def run(self):
         """
         Main. Disconnects possible connections and starts as many connections as needed.
-        :param myo_amount: amount of myos to detect before EMG/IMU stream starts.
         """
         self.disconnect_all()
         while len(self.myos) < self.config.MYO_AMOUNT:
