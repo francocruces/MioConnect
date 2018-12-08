@@ -3,8 +3,11 @@ import struct
 
 
 class DataHandler:
-    def __init__(self, osc, config):
-        self.osc = osc
+    """
+    EMG/IMU/Classifier data handler.
+    """
+    def __init__(self, config):
+        self.osc = udp_client.SimpleUDPClient(config.OSC_ADDRESS, config.OSC_PORT)
         self.printEmg = config.PRINT_EMG
         self.printImu = config.PRINT_IMU
 

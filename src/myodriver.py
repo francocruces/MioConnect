@@ -1,31 +1,21 @@
-import re
-import time
-import serial
-from serial.tools.list_ports import comports
-import struct
-
-from src.public.bglib import BGLib
 from src.public.myohw import *
 from src.myo import Myo
+from src.bluetooth import Bluetooth
 from src.data_handler import DataHandler
-from pythonosc import udp_client
 
 
 class MyoDriver:
     """
-    Responsible for handling myo connections and messages.
+    Responsible for myo connections and messages.
     """
-
     def __init__(self, config):
         self.config = config
-        self.serial = serial.Serial(port=self._detect_port(), baudrate=9600, dsrdtr=1)
-        self.osc = udp_client.SimpleUDPClient(self.config.OSC_ADDRESS, self.config.OSC_PORT)
         print("OSC Address: " + str(self.config.OSC_ADDRESS))
         print("OSC Port: " + str(self.config.OSC_PORT))
         print()
-        self.data_handler = DataHandler(self.osc, self.config)
 
-        self.lib = BGLib()
+        self.data_handler = DataHandler(self.config)
+        self.bluetooth = Bluetooth(self.config.MESSAGE_DELAY)
 
         self.myos = []
 
@@ -36,44 +26,8 @@ class MyoDriver:
         # Add handlers for expected events
         self.set_handlers()
 
-    def _detect_port(self):
-        """
-        Detect COM port.
-        :return: COM port with the expected ID
-        """
-        self.print_status("Detecting available ports")
-        for p in comports():
-            if re.search(r'PID=2458:0*1', p[2]):
-                self.print_status('Port detected: ', p[0]) if self.config.VERBOSE else ""
-                self.print_status()
-                return p[0]
-        return None
-
     def receive(self):
-        """
-        Check for received evens and handle them.
-        """
-        self.lib.check_activity(self.serial)
-
-    def send(self, msg):
-        """
-        Send given message through serial. A small delay is required for the Myo to process them correctly
-        :param msg: packed message to send
-        """
-        time.sleep(self.config.MESSAGE_DELAY)
-        self.lib.send_command(self.serial, msg)
-
-    def write_att(self, connection, atthandle, data):
-        """
-        Wrapper for code readability.
-        """
-        self.send(self.lib.ble_cmd_attclient_attribute_write(connection, atthandle, data))
-
-    def read_att(self, connection, atthandle):
-        """
-        Wrapper for code readability.
-        """
-        self.send(self.lib.ble_cmd_attclient_read_by_handle(connection, atthandle))
+        self.bluetooth.receive()
 
     def handle_discover(self, e, payload):
         """
@@ -149,22 +103,17 @@ class MyoDriver:
         """
         Set handlers for relevant events.
         """
-        self.lib.ble_evt_gap_scan_response.add(self.handle_discover)
-        self.lib.ble_rsp_gap_connect_direct.add(self.handle_connect)
-        self.lib.ble_evt_attclient_attribute_value.add(self.handle_attribute_value)
-        self.lib.ble_evt_connection_disconnected.add(self.handle_disconnect)
-        self.lib.ble_evt_connection_status.add(self.handle_connection_status)
-        # self.lib.ble_rsp_attclient_read_by_handle.add(self.print_status)
-        # self.bglib.ble_rsp_attclient_attribute_write.add(self.print_status)
+        self.bluetooth.add_scan_response_handler(self.handle_discover)
+        self.bluetooth.add_connect_response_handler(self.handle_connect)
+        self.bluetooth.add_attribute_value_handler(self.handle_attribute_value)
+        self.bluetooth.add_disconnected_handler(self.handle_disconnect)
+        self.bluetooth.add_connection_status_handler(self.handle_connection_status)
 
     def disconnect_all(self):
         """
         Stop possible scanning and close all connections.
         """
-        self.send(self.lib.ble_cmd_gap_end_procedure())
-        self.send(self.lib.ble_cmd_connection_disconnect(0))
-        self.send(self.lib.ble_cmd_connection_disconnect(1))
-        self.send(self.lib.ble_cmd_connection_disconnect(2))
+        self.bluetooth.disconnect_all()
 
     def add_myo_connection(self):
         """
@@ -172,39 +121,31 @@ class MyoDriver:
         """
         # Discover
         self.print_status("Scanning")
-        self.send(self.lib.ble_cmd_gap_discover(1))
+        self.bluetooth.gap_discover()
 
         # Await response
         self.scanning = True
         while self.myo_to_connect is None:
-            self.lib.check_activity(self.serial)
+            self.bluetooth.receive()
 
         # End gap
-        self.send(self.lib.ble_cmd_gap_end_procedure())
+        self.bluetooth.end_gap()
 
         # Direct connection
         self.print_status("Connecting to", self.myo_to_connect.address)
-        self.send(self.lib.ble_cmd_gap_connect_direct(self.myo_to_connect.address, *Final.direct_connection_tail))
+        self.bluetooth.direct_connect(self.myo_to_connect.address)
 
         # Await response
         while self.myo_to_connect.connection_id is None or not self.connected:
-            self.lib.check_activity(self.serial)
+            self.receive()
 
         # Notify successful connection with self.print_status and vibration
         self.print_status("Connection successful. Setting up...")
         self.print_status()
-        self.write_att(self.myo_to_connect.connection_id,
-                       ServiceHandles.CommandCharacteristic,
-                       [MyoCommand.myohw_command_vibrate,
-                        0x01,
-                        VibrationType.myohw_vibration_short])
+        self.bluetooth.send_vibration_short(self.myo_to_connect.connection_id)
 
         # Disable sleep
-        self.write_att(self.myo_to_connect.connection_id,
-                       ServiceHandles.CommandCharacteristic,
-                       [MyoCommand.myohw_command_set_sleep_mode,
-                        0x01,
-                        SleepMode.myohw_sleep_mode_never_sleep])
+        self.bluetooth.disable_sleep(self.myo_to_connect.connection_id)
 
         self.myos.append(self.myo_to_connect)
         print("Myo ready", self.myo_to_connect.connection_id, self.myo_to_connect.address)
@@ -221,12 +162,9 @@ class MyoDriver:
             self.print_status("Getting myo info")
             self.print_status()
             for myo in self.myos:
-                self.read_att(myo.connection_id,
-                              ServiceHandles.DeviceName)
-                self.read_att(myo.connection_id,
-                              ServiceHandles.FirmwareVersionCharacteristic)
-                self.read_att(myo.connection_id,
-                              ServiceHandles.BatteryCharacteristic)
+                self.bluetooth.read_device_name(myo.connection_id)
+                self.bluetooth.read_firmware_version(myo.connection_id)
+                self.bluetooth.read_battery_level(myo.connection_id)
             while not self._myos_ready():
                 self.receive()
             print("Myo list:")
@@ -264,43 +202,14 @@ class MyoDriver:
     def deep_sleep_all(self):
         print("Turning off devices...")
         for m in self.myos:
-            self.write_att(m.connection_id,
-                           ServiceHandles.CommandCharacteristic,
-                           [MyoCommand.myohw_command_deep_sleep])
+            self.bluetooth.deep_sleep(m.connection_id)
         print("Disconnected.")
 
     def enable_data_all(self):
         """
         Start EMG/IMJ/Classifier data and subscribe to their corresponding characteristic.
         """
-        # TODO: Subscribe to classifier events.
         for m in self.myos:
-            # Start EMG
-            self.write_att(m.connection_id,
-                           ServiceHandles.CommandCharacteristic,
-                           [MyoCommand.myohw_command_set_mode,
-                            0x03,
-                            self.config.EMG_MODE,
-                            self.config.IMU_MODE,
-                            self.config.CLASSIFIER_MODE])
-
-            # Subscribe for IMU
-            self.write_att(m.connection_id,
-                           ServiceHandles.IMUDataDescriptor,
-                           Final.subscribe_payload)
-
-            # Subscribe for EMG
-            self.write_att(m.connection_id,
-                           ServiceHandles.EmgData0Descriptor,
-                           Final.subscribe_payload)
-            self.write_att(m.connection_id,
-                           ServiceHandles.EmgData1Descriptor,
-                           Final.subscribe_payload)
-            self.write_att(m.connection_id,
-                           ServiceHandles.EmgData2Descriptor,
-                           Final.subscribe_payload)
-            self.write_att(m.connection_id,
-                           ServiceHandles.EmgData3Descriptor,
-                           Final.subscribe_payload)
+            self.bluetooth.enable_data(m.connection_id, self.config)
         if self.config.VERBOSE:
             print("Data enabled according to config for all devices.")
