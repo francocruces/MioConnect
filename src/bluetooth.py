@@ -9,6 +9,7 @@ from serial.tools.list_ports import comports
 class Bluetooth:
     """
     Responsible for serial comm and message encapsulation.
+    New commands can be added using myohw.py and following provided commands.
     """
     def __init__(self, message_delay):
         self.lib = BGLib()
@@ -27,6 +28,10 @@ class Bluetooth:
                 print()
                 return p[0]
         return None
+
+##############################################################################
+#                                  PROTOCOL                                  #
+##############################################################################
 
     def receive(self):
         """
@@ -62,6 +67,11 @@ class Bluetooth:
         self.send(self.lib.ble_cmd_connection_disconnect(0))
         self.send(self.lib.ble_cmd_connection_disconnect(1))
         self.send(self.lib.ble_cmd_connection_disconnect(2))
+
+
+##############################################################################
+#                                  COMMANDS                                  #
+##############################################################################
 
     def gap_discover(self):
         self.send(self.lib.ble_cmd_gap_discover(1))
@@ -143,6 +153,11 @@ class Bluetooth:
         self.write_att(connection,
                        ServiceHandles.EmgData3Descriptor,
                        Final.subscribe_payload)
+
+
+##############################################################################
+#                                  HANDLERS                                  #
+##############################################################################
 
     def add_scan_response_handler(self, handler):
         self.lib.ble_evt_gap_scan_response.add(handler)
