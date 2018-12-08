@@ -19,10 +19,17 @@ This project runs on Python 3. Requirements are inside `requirements.txt` file.
 You can easily install them via `pip install -r requirements.txt`.
 
 # How to run
-The file `main.py` contains the main loop for the application. Which instantiates a MyoDriver object and starts the
-main procedure.
+The file `mio_connect.py` contains the main loop for the application. Which instantiates a MyoDriver object and starts
+the main procedure.
 
-All relevant decisions are written in a single config file `src/config.py`. These settings include:
+Run `mio_connect.py -h` to get help on the software usage. You can add the following commands:
+* `-h` or `--help` to see this list
+* `-s` or `--shutdown` to turn off (deep_sleep) the expected amount of myos
+* `-n <amount>` or `-nmyo <amount>` to set the amount of devices to expect
+* `-a <address>` or `-address <address>` to set OSC address
+* `-p <port_number>` or `-port <port_number>` to set OSC port
+
+Default configuration is written in a single file: `src/config.py`. These settings include:
 * Amount of myos to detect
 * EMG mode (send data, raw data, disabled, ...)
 * IMU mode (send data, send events, disabled, ...)
@@ -52,7 +59,7 @@ in which the OSC protocol is implemented
 
 # Project files
 
-## `main.py`
+## `mio_connect.py`
 
 This file contains the main loop for the application.
 
