@@ -53,28 +53,30 @@ class MyoDriver:
         Handler for ble_rsp_gap_connect_direct event.
         """
         if not payload['result'] == 0:
-            raise RuntimeError(payload)
+            if payload['result'] == 385:
+                print("ERROR: Device in Wrong State")
+            else:
+                print(payload)
 
     def create_disconnect_handle(self, myo):
         def handle_disconnect(e, payload):
             """
             Handler for ble_evt_connection_status event.
             """
-            print("Disconnected:", payload)
-
             if myo.connection_id == payload['connection']:
                 myo.set_connected(False)
                 if payload['reason'] == 574:
-                    print("Disconnected. Reason: Connection Failed to be Established")
-                    pass
+                    print("Disconnected. Reason: Connection Failed to be Established.")
                 if payload['reason'] == 534:
-                    print("Disconnected. Reason: Connection Terminated by Local Host")
+                    print("Disconnected. Reason: Connection Terminated by Local Host.")
                 if payload['reason'] == 520:
-                    print("Disconnected. Reason: Connection Timeout")
-                    time.sleep(5)
-                    self.direct_connect(myo)
-                    pass
-                # TODO: Retry.
+                    print("Disconnected. Reason: Connection Timeout.")
+                else:
+                    print("Disconnected:", payload)
+                # Won't return until the connection is established successfully
+                # TODO: Implement max retries.
+                print("Reconnecting...")
+                self.connect_and_retry(myo, self.config.RETRY_CONNECTION_AFTER)
         return handle_disconnect
 
     def create_connection_status_handle(self, myo):
@@ -151,19 +153,41 @@ class MyoDriver:
         self.bluetooth.add_connection_status_handler(self.create_connection_status_handle(self.myo_to_connect))
         self.bluetooth.add_disconnected_handler(self.create_disconnect_handle(self.myo_to_connect))
 
-        # Direct connection
+        # Direct connection. Reconnect implements the retry procedure.
         self.myos.append(self.myo_to_connect)
-        self.direct_connect(self.myo_to_connect)
+        self.connect_and_retry(self.myo_to_connect, self.config.RETRY_CONNECTION_AFTER)
         self.myo_to_connect = None
 
+    def connect_and_retry(self, myo, timeout=None):
+        """
+        Procedure for a reconnection.
+        :param myo: Myo object to connect. Should have its address set
+        :param timeout: Time to wait for response
+        :return: True if connection was successful, false otherwise.
+        """
+        # The subroutine will await the response until timeout is met
+        while not self.direct_connect(myo, timeout) and not myo.connected:
+            print()
+            print("Reconnection failed. Retrying...")
+        myo.set_connected(True)
+        return True
+
     def direct_connect(self, myo_to_connect, timeout=None):
-        # TODO: Add timeout.
+        """
+        Procedure for a direct connection with the device.
+        :param myo_to_connect: Myo object to connect. Should have its address set
+        :param timeout: Time to wait for response
+        :return: True if connection was successful, false otherwise.
+        """
+        t0 = time.time()
         # Direct connection
         self.print_status("Connecting to", myo_to_connect.address)
         self.bluetooth.direct_connect(myo_to_connect.address)
 
         # Await response
         while myo_to_connect.connection_id is None or not myo_to_connect.connected:
+            if timeout is not None and timeout + t0 < time.time():
+                return False
             self.receive()
 
         # Notify successful connection with self.print_status and vibration
@@ -179,6 +203,7 @@ class MyoDriver:
 
         print("Myo ready", myo_to_connect.connection_id, myo_to_connect.address)
         print()
+        return True
 
     def get_info(self):
         """

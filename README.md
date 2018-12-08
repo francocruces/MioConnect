@@ -30,15 +30,16 @@ Run `mio_connect.py -h` to get help on the software usage. You can add the follo
 * `-p <port_number>` or `--port <port_number>` to set OSC port
 
 Default configuration is written in a single file: `src/config.py`. These settings include:
-* Amount of myos to detect
-* EMG mode (send data, raw data, disabled, ...)
-* IMU mode (send data, send events, disabled, ...)
-* Classifier mode (enabled, disabled)
-* Turn off (deep sleep) at KeyboardInterrupt
-* Print EMG/IMU through console
-* Verbose output
-* Store and notify Myo Info after connections are made
-* Added delay between messages sent to the armband
+* `MYO_AMOUNT`: Default amount of myos to detect
+* `EMG_MODE`: EMG mode (send data, raw data, disabled, ...)
+* `IMU_MODE`: IMU mode (send data, send events, disabled, ...)
+* `CLASSIFIER_MODE`: Classifier mode (enabled, disabled)
+* `DEEP_SLEEP_AT_KEYBOARD_INTERRUPT`: Turn off (deep sleep) at KeyboardInterrupt
+* `PRINT_EMG`: Print EMG/IMU through console
+* `PRINT_IMU`: Verbose output
+* `GET_MYO_INFO`: Store and notify Myo Info after connections are made
+* `MESSAGE_DELAY`: Added delay between messages sent to the armband
+* `RETRY_CONNECTION_AFTER`: Time to wait before retrying the connection after unexpected disconnect
 
 ## What it does
 The code is thoroughly documented and should be easy to follow, but a high-level description will be given:
