@@ -21,6 +21,8 @@ class MyoDriver:
         self.osc = udp_client.SimpleUDPClient(self.config.OSC_ADDRESS, self.config.OSC_PORT)
         print("OSC Address: " + str(self.config.OSC_ADDRESS))
         print("OSC Port: " + str(self.config.OSC_PORT))
+        print()
+
         self.lib = BGLib()
 
         self.myos = []
@@ -221,7 +223,6 @@ class MyoDriver:
         """
         Procedure for connection with the Myo Armband. Scans, connects, disables sleep and starts EMG stream.
         """
-
         # Discover
         self.print_status("Scanning")
         self.send(self.lib.ble_cmd_gap_discover(1))
@@ -269,21 +270,22 @@ class MyoDriver:
         """
         Send read attribute messages and await answer.
         """
-        self.print_status("Getting myo info")
-        self.print_status()
-        for myo in self.myos:
-            self.read_att(myo.connection_id,
-                          ServiceHandles.DeviceName)
-            self.read_att(myo.connection_id,
-                          ServiceHandles.FirmwareVersionCharacteristic)
-            self.read_att(myo.connection_id,
-                          ServiceHandles.BatteryCharacteristic)
-        while not self._myos_ready():
-            self.receive()
-        print("Myo list:")
-        for myo in self.myos:
-            print(" - " + str(myo))
-        print()
+        if len(self.myos):
+            self.print_status("Getting myo info")
+            self.print_status()
+            for myo in self.myos:
+                self.read_att(myo.connection_id,
+                              ServiceHandles.DeviceName)
+                self.read_att(myo.connection_id,
+                              ServiceHandles.FirmwareVersionCharacteristic)
+                self.read_att(myo.connection_id,
+                              ServiceHandles.BatteryCharacteristic)
+            while not self._myos_ready():
+                self.receive()
+            print("Myo list:")
+            for myo in self.myos:
+                print(" - " + str(myo))
+            print()
 
     def _myos_ready(self):
         """
@@ -313,7 +315,7 @@ class MyoDriver:
             print(*args)
 
     def deep_sleep_all(self):
-        print("Disconnecting...")
+        print("Turning off devices...")
         for m in self.myos:
             self.write_att(m.connection_id,
                            ServiceHandles.CommandCharacteristic,
@@ -354,4 +356,4 @@ class MyoDriver:
                            ServiceHandles.EmgData3Descriptor,
                            Final.subscribe_payload)
         if self.config.VERBOSE:
-            print("Data enabled for all myos according to config.")
+            print("Data enabled according to config for all devices.")

@@ -8,7 +8,7 @@ import sys
 def main(argv):
     config = Config()
     try:
-        opts, args = getopt.getopt(argv, 'hsn:a:p:', ['help', 'shutdown', 'nmyo', 'address', 'port'])
+        opts, args = getopt.getopt(argv, 'hsn:a:p:v', ['help', 'shutdown', 'nmyo', 'address', 'port', 'verbose'])
     except getopt.GetoptError:
         sys.exit(2)
     turnoff = False
@@ -24,6 +24,8 @@ def main(argv):
             config.OSC_ADDRESS = arg
         elif opt in ("-p", "--port"):
             config.OSC_PORT = arg
+        elif opt in ("-v", "--verbose"):
+            config.VERBOSE = True
 
     # Run
     myo_driver = None
