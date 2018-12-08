@@ -7,7 +7,6 @@ import struct
 from src.public.bglib import BGLib
 from src.public.myohw import *
 from src.myo import Myo
-from src.config import Config
 from pythonosc import udp_client
 
 
@@ -16,9 +15,12 @@ class MyoDriver:
     Responsible for handling myo connections and messages.
     """
 
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
         self.serial = serial.Serial(port=self._detect_port(), baudrate=9600, dsrdtr=1)
-        self.osc = udp_client.SimpleUDPClient(Config.OSC_ADDRESS, Config.OSC_PORT)
+        self.osc = udp_client.SimpleUDPClient(self.config.OSC_ADDRESS, self.config.OSC_PORT)
+        print("OSC Address: " + str(self.config.OSC_ADDRESS))
+        print("OSC Port: " + str(self.config.OSC_PORT))
         self.lib = BGLib()
 
         self.myos = []
@@ -38,7 +40,7 @@ class MyoDriver:
         self.print_status("Detecting available ports")
         for p in comports():
             if re.search(r'PID=2458:0*1', p[2]):
-                self.print_status('Port detected: ', p[0]) if Config.VERBOSE else ""
+                self.print_status('Port detected: ', p[0]) if self.config.VERBOSE else ""
                 self.print_status()
                 return p[0]
         return None
@@ -54,7 +56,7 @@ class MyoDriver:
         Send given message through serial. A small delay is required for the Myo to process them correctly
         :param msg: packed message to send
         """
-        time.sleep(Config.MESSAGE_DELAY)
+        time.sleep(self.config.MESSAGE_DELAY)
         self.lib.send_command(self.serial, msg)
 
     def write_att(self, connection, atthandle, data):
@@ -144,7 +146,7 @@ class MyoDriver:
         Handle EMG data.
         :param payload: emg data as two samples in a single pack.
         """
-        if Config.PRINT_EMG:
+        if self.config.PRINT_EMG:
             print("EMG", payload['connection'], payload['atthandle'], payload['value'])
 
         # Send first sample
@@ -168,7 +170,7 @@ class MyoDriver:
         Handle IMU data.
         :param payload: imu data in a single byte array.
         """
-        if Config.PRINT_IMU:
+        if self.config.PRINT_IMU:
             print("IMU", payload['connection'], payload['atthandle'], payload['value'])
         # Send orientation
         data = payload['value'][0:8]
@@ -256,36 +258,6 @@ class MyoDriver:
                         0x01,
                         SleepMode.myohw_sleep_mode_never_sleep])
 
-        # Start EMG
-        self.write_att(self.myo_to_connect.connection_id,
-                       ServiceHandles.CommandCharacteristic,
-                       [MyoCommand.myohw_command_set_mode,
-                        0x03,
-                        Config.EMG_MODE,
-                        Config.IMU_MODE,
-                        Config.CLASSIFIER_MODE])
-
-        # Subscribe for IMU
-        self.write_att(self.myo_to_connect.connection_id,
-                       ServiceHandles.IMUDataDescriptor,
-                       Final.subscribe_payload)
-
-        # Subscribe for EMG
-        self.write_att(self.myo_to_connect.connection_id,
-                       ServiceHandles.EmgData0Descriptor,
-                       Final.subscribe_payload)
-        self.write_att(self.myo_to_connect.connection_id,
-                       ServiceHandles.EmgData1Descriptor,
-                       Final.subscribe_payload)
-        self.write_att(self.myo_to_connect.connection_id,
-                       ServiceHandles.EmgData2Descriptor,
-                       Final.subscribe_payload)
-        self.write_att(self.myo_to_connect.connection_id,
-                       ServiceHandles.EmgData3Descriptor,
-                       Final.subscribe_payload)
-
-        # TODO: Subscribe to classifier events.
-
         self.myos.append(self.myo_to_connect)
         print("Myo ready", self.myo_to_connect.connection_id, self.myo_to_connect.address)
         print()
@@ -322,14 +294,14 @@ class MyoDriver:
                 return False
         return True
 
-    def run(self, myo_amount):
+    def run(self):
         """
         Main. Disconnects possible connections and starts as many connections as needed.
         :param myo_amount: amount of myos to detect before EMG/IMU stream starts.
         """
         self.disconnect_all()
-        while len(self.myos) < myo_amount:
-            print("*** Connecting myo " + str(len(self.myos) + 1) + " out of " + str(myo_amount) + " ***")
+        while len(self.myos) < self.config.MYO_AMOUNT:
+            print("*** Connecting myo " + str(len(self.myos) + 1) + " out of " + str(self.config.MYO_AMOUNT) + " ***")
             print()
             self.add_myo_connection()
 
@@ -337,11 +309,49 @@ class MyoDriver:
         """
         Printer function for VERBOSE support.
         """
-        if Config.VERBOSE:
+        if self.config.VERBOSE:
             print(*args)
 
     def deep_sleep_all(self):
+        print("Disconnecting...")
         for m in self.myos:
             self.write_att(m.connection_id,
                            ServiceHandles.CommandCharacteristic,
                            [MyoCommand.myohw_command_deep_sleep])
+        print("Disconnected.")
+
+    def enable_data_all(self):
+        """
+        Start EMG/IMJ/Classifier data and subscribe to their corresponding characteristic.
+        """
+        # TODO: Subscribe to classifier events.
+        for m in self.myos:
+            # Start EMG
+            self.write_att(m.connection_id,
+                           ServiceHandles.CommandCharacteristic,
+                           [MyoCommand.myohw_command_set_mode,
+                            0x03,
+                            self.config.EMG_MODE,
+                            self.config.IMU_MODE,
+                            self.config.CLASSIFIER_MODE])
+
+            # Subscribe for IMU
+            self.write_att(m.connection_id,
+                           ServiceHandles.IMUDataDescriptor,
+                           Final.subscribe_payload)
+
+            # Subscribe for EMG
+            self.write_att(m.connection_id,
+                           ServiceHandles.EmgData0Descriptor,
+                           Final.subscribe_payload)
+            self.write_att(m.connection_id,
+                           ServiceHandles.EmgData1Descriptor,
+                           Final.subscribe_payload)
+            self.write_att(m.connection_id,
+                           ServiceHandles.EmgData2Descriptor,
+                           Final.subscribe_payload)
+            self.write_att(m.connection_id,
+                           ServiceHandles.EmgData3Descriptor,
+                           Final.subscribe_payload)
+        if self.config.VERBOSE:
+            print("Data enabled for all myos according to config.")

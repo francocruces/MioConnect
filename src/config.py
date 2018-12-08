@@ -1,22 +1,25 @@
+"""
+Default values for the script. Can be overridden by system args.
+"""
 from src.public.myohw import *
 
 
 class Config:
 
-    MYO_AMOUNT = 1
-    EMG_MODE = EmgMode.myohw_emg_mode_send_emg
-    IMU_MODE = ImuMode.myohw_imu_mode_send_data
-    CLASSIFIER_MODE = ClassifierMode.myohw_classifier_mode_disabled
+    MYO_AMOUNT = 1  # Amount of myos to expect
+    EMG_MODE = EmgMode.myohw_emg_mode_send_emg  # EMG mode
+    IMU_MODE = ImuMode.myohw_imu_mode_send_data  # IMU mode
+    CLASSIFIER_MODE = ClassifierMode.myohw_classifier_mode_disabled  # Classifier mode
 
-    DEEP_SLEEP_AT_DISCONNECT = False
+    DEEP_SLEEP_AT_KEYBOARD_INTERRUPT = False  # Turn off connected devices after keyboard interrupt
 
-    PRINT_EMG = False
-    PRINT_IMU = False
+    PRINT_EMG = False  # Console print EMG data
+    PRINT_IMU = False  # Console print IMU data
 
-    VERBOSE = True
-    GET_MYO_INFO = True
+    VERBOSE = False  # Verbose console
+    GET_MYO_INFO = True  # Get and display myo info at sync
 
-    MESSAGE_DELAY = 0.1
+    MESSAGE_DELAY = 0.1  # Added delay before every message sent to the myo
 
-    OSC_ADDRESS = 'localhost'
-    OSC_PORT = 3000
+    OSC_ADDRESS = 'localhost'  # Address for OSC
+    OSC_PORT = 3000  # Port for OSC
