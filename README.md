@@ -66,6 +66,7 @@ This file contains the main loop for the application.
 ## `src`
 
 * `config.py`: Settings for the application. Details under "How to run" section.
+* `data_handler`: Handles EMG/IMU data
 * `myo.py`: Class for a myo, handles device info and prints it nicely
 * `myodriver.py`: Driver for myo connection and data handling.
 
