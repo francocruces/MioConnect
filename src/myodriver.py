@@ -59,7 +59,9 @@ class MyoDriver:
         """
         Handle for ble_evt_connection_disconnected event.
         """
-        self.print_status("Disconnected:", payload)
+        print("Disconnected:", payload)
+        print(payload['connection'])
+        print(payload['reason'])
 
     def handle_connection_status(self, e, payload):
         """
@@ -132,26 +134,29 @@ class MyoDriver:
         self.bluetooth.end_gap()
 
         # Direct connection
-        self.print_status("Connecting to", self.myo_to_connect.address)
-        self.bluetooth.direct_connect(self.myo_to_connect.address)
+        self.direct_connect(self.myo_to_connect)
+        self.myo_to_connect = None
+
+    def direct_connect(self, myo_to_connect):
+        # Direct connection
+        self.print_status("Connecting to", myo_to_connect.address)
+        self.bluetooth.direct_connect(myo_to_connect.address)
 
         # Await response
-        while self.myo_to_connect.connection_id is None or not self.connected:
+        while myo_to_connect.connection_id is None or not self.connected:
             self.receive()
 
         # Notify successful connection with self.print_status and vibration
         self.print_status("Connection successful. Setting up...")
         self.print_status()
-        self.bluetooth.send_vibration_short(self.myo_to_connect.connection_id)
+        self.bluetooth.send_vibration_short(myo_to_connect.connection_id)
 
         # Disable sleep
-        self.bluetooth.disable_sleep(self.myo_to_connect.connection_id)
+        self.bluetooth.disable_sleep(myo_to_connect.connection_id)
 
-        self.myos.append(self.myo_to_connect)
-        print("Myo ready", self.myo_to_connect.connection_id, self.myo_to_connect.address)
+        self.myos.append(myo_to_connect)
+        print("Myo ready", myo_to_connect.connection_id, myo_to_connect.address)
         print()
-        self.myo_to_connect = None
-        self.scanning = False
         self.connected = False
 
     def get_info(self):

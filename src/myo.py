@@ -49,7 +49,7 @@ class Myo:
 
     def __str__(self):
         return "Myo: " + str(self.device_name) + ", " + \
-               "Battery level: " + str(*struct.unpack('b', self.battery_level)) + ", " + \
+               "Battery level: " + str(*struct.unpack('b', self.battery_level)) + "/100, " + \
                "Connection: " + str(self.connection_id) + ", " + \
                "Address: " + str(self.address) + ", " + \
                "Firmware: " + str(self.firmware_version)

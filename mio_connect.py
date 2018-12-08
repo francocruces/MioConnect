@@ -47,6 +47,7 @@ def main(argv):
             # Get info
             myo_driver.get_info()
 
+        myo_driver.enable_data_all()
         print("Ready for data.")
 
         # Receive and handle data
