@@ -105,3 +105,6 @@ venv.bak/
 
 # idea folder
 .idea/
+
+# folders starting with .
+.*/
