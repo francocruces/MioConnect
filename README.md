@@ -28,6 +28,7 @@ Run `mio_connect.py -h` to get help on the software usage. You can add the follo
 * `-n <amount>` or `--nmyo <amount>` to set the amount of devices to expect
 * `-a <address>` or `--address <address>` to set OSC address
 * `-p <port_number>` or `--port <port_number>` to set OSC port
+* `-v` or `--verbose` for verbose output
 
 Default configuration is written in a single file: `src/config.py`. These settings include:
 * `MYO_AMOUNT`: Default amount of myos to detect
@@ -69,10 +70,24 @@ This file contains the main loop for the application.
 
 ## `src`
 
-* `config.py`: Settings for the application. Details under "How to run" section.
-* `data_handler`: Handles EMG/IMU data
-* `myo.py`: Class for a myo, handles device info and prints it nicely
-* `myodriver.py`: Driver for myo connection and data handling.
+Each file contains a single python class with its own responsibility:
+
+* `bluetooth.py` / `Bluetooth(msg_delay)`: Serial communication and command encapsulation. Every command sent to the
+armband should pass through this class. New commands can be added at the end of the file following the structure of the
+other commands and reading the `myohw` file (or the original one).
+
+* `config.py` / `Config()`: Settings for the application. Details under "How to run" section.
+
+* `data_handler.py` / `DataHandler(config_obj)`: Handles EMG/IMU data and sends it through OSC. Here lies encapsulated
+the OSC message structure and no other file should change when adjusting it.
+ 
+* `myo.py` / `Myo(address)`: Class for a myo, handles device info and prints it nicely. It's instantiated after the
+address is received, and it's used inside handlers in order to properly connect/reconnect. It also keeps the data
+obtained through MyoDriver's method `get_info()` (i.e. device name, battery level and firmware version), printing a Myo
+object will display all the info.
+
+* `myodriver.py` / `MyoDriver(config_obj)`: Driver for myo connection and data handling. Implements main procedures for
+global functionality, such as connection and reconnection protocols and data/event handling.
 
 ## `src/public`
 
