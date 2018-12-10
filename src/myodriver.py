@@ -30,7 +30,7 @@ class MyoDriver:
     def receive(self):
         self.bluetooth.receive()
 
-    def handle_discover(self, e, payload):
+    def handle_discover(self, _, payload):
         """
         Handler for ble_evt_gap_scan_response event.
         """
@@ -44,12 +44,17 @@ class MyoDriver:
                     self.scanning = False
 
     def _has_paired_with(self, address):
+        """
+        Checks if given address has already been recorded in a Myo initialization.
+        :param address: address to check
+        :return: True if already paired, False otherwise.
+        """
         for m in self.myos:
             if m.address == address:
                 return True
         return False
 
-    def handle_connect(self, e, payload):
+    def handle_connect(self, _, payload):
         """
         Handler for ble_rsp_gap_connect_direct event.
         """
@@ -58,9 +63,11 @@ class MyoDriver:
                 print("ERROR: Device in Wrong State")
             else:
                 print(payload)
+        else:
+            self.print_status("Connection successful")
 
     def create_disconnect_handle(self, myo):
-        def handle_disconnect(e, payload):
+        def handle_disconnect(_, payload):
             """
             Handler for ble_evt_connection_status event.
             """
@@ -81,7 +88,7 @@ class MyoDriver:
         return handle_disconnect
 
     def create_connection_status_handle(self, myo):
-        def handle_connection_status(e, payload):
+        def handle_connection_status(_, payload):
             """
             Handler for ble_evt_connection_status event.
             """
@@ -257,6 +264,9 @@ class MyoDriver:
             print(*args)
 
     def deep_sleep_all(self):
+        """
+        Send deep sleep (turn off) signal to every connected myo.
+        """
         print("Turning off devices...")
         for m in self.myos:
             self.bluetooth.deep_sleep(m.connection_id)

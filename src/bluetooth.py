@@ -1,9 +1,9 @@
+from serial.tools.list_ports import comports
+import serial
 from src.public.bglib import BGLib
 import re
 import time
 from src.public.myohw import *
-import serial
-from serial.tools.list_ports import comports
 
 
 class Bluetooth:
@@ -16,7 +16,8 @@ class Bluetooth:
         self.message_delay = message_delay
         self.serial = serial.Serial(port=self._detect_port(), baudrate=9600, dsrdtr=1)
 
-    def _detect_port(self):
+    @staticmethod
+    def _detect_port():
         """
         Detect COM port.
         :return: COM port with the expected ID

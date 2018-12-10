@@ -24,7 +24,7 @@ the main procedure.
 
 Run `mio_connect.py -h` to get help on the software usage. You can add the following commands:
 * `-h` or `--help` to see this list
-* `-s` or `--shutdown` to turn off (deep_sleep) the expected amount of myos
+* `-s` or `--shutdown` to turn off (deep sleep) the expected amount of myos
 * `-n <amount>` or `--nmyo <amount>` to set the amount of devices to expect
 * `-a <address>` or `--address <address>` to set OSC address
 * `-p <port_number>` or `--port <port_number>` to set OSC port
@@ -73,8 +73,8 @@ This file contains the main loop for the application.
 Each file contains a single python class with its own responsibility:
 
 * `bluetooth.py` / `Bluetooth(msg_delay)`: Serial communication and command encapsulation. Every command sent to the
-armband should pass through this class. New commands can be added at the end of the file following the structure of the
-other commands and reading the `myohw` file (or the original one).
+armband should pass through this class. New commands can be added at the end of the command section, following the
+structure of the other commands and reading the `myohw` file (the `.py` or the official one).
 
 * `config.py` / `Config()`: Settings for the application. Details under "How to run" section.
 
@@ -110,8 +110,9 @@ it with `-n <amount>` will find and turn off given amount of myos.
 
 * Not tested on Linux or OS X, but should work the same way.
 * There's currently no way to enter Dongle name manually, if anything goes wrong, you should hardcode it at serial
-initialization
+initialization.
 * No user interface.
+* Does not subscribe to Classifier events.
 
 # References
 * Myo Bluetooth Protocol Release 

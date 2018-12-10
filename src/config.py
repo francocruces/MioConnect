@@ -26,4 +26,3 @@ class Config:
 
     RETRY_CONNECTION_AFTER = 2  # Reconnection timeout in seconds
     MAX_RETRIES = None  # Max amount of retries after unexpected disconnect
-

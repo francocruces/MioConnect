@@ -1,6 +1,5 @@
 from src.public.myohw import *
 import struct
-import time
 
 
 class Myo:
@@ -47,10 +46,10 @@ class Myo:
         :return:True if every field is valid, False otherwise.
         """
         return self.address is not None and \
-               self.connection_id is not None and \
-               self.device_name is not None and \
-               self.firmware_version is not None and \
-               self.battery_level is not None
+            self.connection_id is not None and \
+            self.device_name is not None and \
+            self.firmware_version is not None and \
+            self.battery_level is not None
 
     def __str__(self):
         return "Myo: " + str(self.device_name) + ", " + \
