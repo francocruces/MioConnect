@@ -70,14 +70,15 @@ def main(argv):
 
 def print_usage():
     message = """usage: python mio_connect.py [-h | --help] [-s | --shutdown] [-n | --nmyo <amount>] [-a | --address \
-<address>] [-p | --port <port_number>]
+<address>] [-p | --port <port_number>] [-v | --verbose]
 
 Options and arguments:
-    -h | --help` to display this message
-    -s | --shutdown` to turn off (deep_sleep) the expected amount of myos
-    -n | --nmyo <amount>` to set the amount of devices to expect
-    -a | --address <address>` to set OSC address
-    -p | --port <port_number>` to set OSC port
+    -h | --help: display this message
+    -s | --shutdown: turn off (deep_sleep) the expected amount of myos
+    -n | --nmyo <amount>: set the amount of devices to expect
+    -a | --address <address>: set OSC address
+    -p | --port <port_number>: set OSC port
+    -v | --verbose: get verbose output
 """
     print(message)
 

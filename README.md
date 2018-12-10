@@ -94,6 +94,7 @@ global functionality, such as connection and reconnection protocols and data/eve
 Contains files that are taken from another project following their respective licenses.
 
 * `bglib.py`:  BGLib implementations for Bluegiga BLE112 Bluetooth Smart module.
+
 * `myohw.py`: A partial transcription of myohw.h file released by Thalmic Labs Inc.
 
 
@@ -102,11 +103,15 @@ The protocol provides the `deep_sleep` command (see `myohw`), according to the r
 a state with basically everything off and can stay in that state for months. The only way to turn it back on is plugging
 it via USB (as MyoConnect would).
 
+You can start a procedure for finding devices and the turning them all off with the `-s` (`--shutdown`) command. Using
+it with `-n <amount>` will find and turn off given amount of myos.
+
 # Issues
 
 * Not tested on Linux or OS X, but should work the same way.
 * There's currently no way to enter Dongle name manually, if anything goes wrong, you should hardcode it at serial
 initialization
+* No user interface.
 
 # References
 * Myo Bluetooth Protocol Release 
