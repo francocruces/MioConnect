@@ -61,11 +61,13 @@ def main(argv):
         print("ERROR: Couldn't open port. Please close MyoConnect and any program using this serial port.")
 
     finally:
+        print("Disconnecting...")
         if myo_driver is not None:
             if Config.DEEP_SLEEP_AT_KEYBOARD_INTERRUPT:
                 myo_driver.deep_sleep_all()
             else:
                 myo_driver.disconnect_all()
+        print("Disconnected")
 
 
 def print_usage():

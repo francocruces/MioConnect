@@ -40,6 +40,8 @@ class Myo:
                     print("MYO WITH UNEXPECTED FIRMWARE, MAY NOT BEHAVE PROPERLY.", payload['value'])
             elif payload['atthandle'] == ServiceHandles.BatteryCharacteristic:
                 self.battery_level = payload['value']
+            else:
+                print("UNEXPECTED ATTRIBUTE VALUE: ", payload)
 
     def ready(self):
         """
