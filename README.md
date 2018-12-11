@@ -114,14 +114,26 @@ initialization.
 * No user interface.
 * Does not subscribe to Classifier events.
 
+# Thalmic Labs rebrand
+
+Thalmic Labs is no longer selling Myo Armbands and has their website (https://www.myo.com/) is now unreachable. The
+developer forums (https://developer.thalmic.com/forums/) are also down and we should not expect any future support from
+Thalmic, but the community may gather in another website (maybe https://www.reddit.com/r/thalmic/)
+
+This is actually a rebrand, they have become "North" and released Smart Glasses powered by Alexa (website:
+https://www.bynorth.com/).
+
+Details here
+https://venturebeat.com/2018/10/23/thalmic-labs-rebrands-as-north-launches-999-alexa-powered-holographic-glasses/.
+
 # References
 * Myo Bluetooth Protocol Release 
 https://developerblog.myo.com/myo-bluetooth-spec-released/
 Released by Thalmic Labs (2015).
 
 * MyoStream
-https://github.com/hcilab/MyoStream.
-Its README.md file has an excellent explanation of the bluetooth protocol
+https://github.com/hcilab/MyoStream
+Its README.md file has an excellent explanation of the bluetooth protocol.
 
 * MyOSC
 https://github.com/benkuper/MyOSC
@@ -130,3 +142,6 @@ OSC bridge for Myo.
 * BGLib
 https://github.com/jrowberg/bglib
 BGLib implementations for Bluegiga BLE112 Bluetooth Smart module.
+
+* About Thalmic Labs rebrand
+https://venturebeat.com/2018/10/23/thalmic-labs-rebrands-as-north-launches-999-alexa-powered-holographic-glasses/
