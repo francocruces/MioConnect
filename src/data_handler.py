@@ -1,5 +1,6 @@
 from pythonosc import udp_client
 import struct
+import math
 
 
 class DataHandler:
@@ -46,22 +47,51 @@ class DataHandler:
         data = payload['value'][0:8]
         builder = udp_client.OscMessageBuilder("/myo/orientation")
         builder.add_arg(str(payload['connection']), 's')
-        for i in struct.unpack('hhhh', data):
-            builder.add_arg(i, 'f')
+        roll, pitch, yaw = self._euler_angle(*(struct.unpack('hhhh', data)))
+        # Normalize to [-1, 1]
+        builder.add_arg(roll / math.pi, 'f')
+        builder.add_arg(pitch / math.pi, 'f')
+        builder.add_arg(yaw / math.pi, 'f')
         self.osc.send(builder.build())
 
         # Send accelerometer
         data = payload['value'][8:14]
         builder = udp_client.OscMessageBuilder("/myo/accel")
         builder.add_arg(str(payload['connection']), 's')
-        for i in struct.unpack('hhh', data):
-            builder.add_arg(i, 'f')
+        builder.add_arg(self._vector_magnitude(*(struct.unpack('hhh', data))), 'f')
         self.osc.send(builder.build())
 
         # Send gyroscope
         data = payload['value'][14:20]
         builder = udp_client.OscMessageBuilder("/myo/gyro")
         builder.add_arg(str(payload['connection']), 's')
-        for i in struct.unpack('hhh', data):
-            builder.add_arg(i, 'f')
+        builder.add_arg(self._vector_magnitude(*(struct.unpack('hhh', data))), 'f')
         self.osc.send(builder.build())
+
+    @staticmethod
+    def _euler_angle(w, x, y, z):
+        """
+        From https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles.
+        """
+        # roll (x-axis rotation)
+        sinr_cosp = +2.0 * (w * x + y * z)
+        cosr_cosp = +1.0 - 2.0 * (x * x + y * y)
+        roll = math.atan2(sinr_cosp, cosr_cosp)
+
+        # pitch (y-axis rotation)
+        sinp = +2.0 * (w * y - z * x)
+        if math.fabs(sinp) >= 1:
+            pitch = math.copysign(math.pi / 2, sinp)  # use 90 degrees if out of range
+        else:
+            pitch = math.asin(sinp)
+
+        # yaw (z-axis rotation)
+        siny_cosp = +2.0 * (w * z + x * y)
+        cosy_cosp = +1.0 - 2.0 * (y * y + z * z)
+        yaw = math.atan2(siny_cosp, cosy_cosp)
+
+        return roll, pitch, yaw
+
+    @staticmethod
+    def _vector_magnitude(x, y, z):
+        return math.sqrt(x * x + y * y + z * z)
