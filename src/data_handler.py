@@ -20,20 +20,15 @@ class DataHandler:
         if self.printEmg:
             print("EMG", payload['connection'], payload['atthandle'], payload['value'])
 
-        # Send first sample
-        data = payload['value'][0:8]
-        builder = udp_client.OscMessageBuilder("/myo/emg")
-        builder.add_arg(str(payload['connection']), 's')
-        for i in struct.unpack('ii', data):
-            builder.add_arg(i, 'i')
-        self.osc.send(builder.build())
+        # Send both samples
+        self._send_single_emg(payload['connection'], payload['value'][0:8])
+        self._send_single_emg(payload['connection'], payload['value'][8:16])
 
-        # Send second message
-        data = payload['value'][8:16]
+    def _send_single_emg(self, conn, data):
         builder = udp_client.OscMessageBuilder("/myo/emg")
-        builder.add_arg(str(payload['connection']), 's')
-        for i in data:
-            builder.add_arg(i, 'i')
+        builder.add_arg(str(conn), 's')
+        for i in struct.unpack('<8b ', data):
+            builder.add_arg(i / 127, 'i')  # Normalize
         self.osc.send(builder.build())
 
     def handle_imu(self, payload):
