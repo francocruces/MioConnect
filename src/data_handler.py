@@ -3,10 +3,17 @@ import struct
 import math
 
 
+# Scale values for unpacking IMU data
+# Taken from myo-to-osc https://github.com/cpmpercussion/myo-to-osc
+ORIENTATION_SCALE = 16384.0  # See imu_data_t::orientation
+ACCELEROMETER_SCALE = 2048.0  # See imu_data_t::accelerometer
+GYROSCOPE_SCALE = 16.0  # See imu_data_t::gyroscope
+
 class DataHandler:
     """
     EMG/IMU/Classifier data handler.
-    """
+    """    
+    
     def __init__(self, config):
         self.osc = udp_client.SimpleUDPClient(config.OSC_ADDRESS, config.OSC_PORT)
         self.printEmg = config.PRINT_EMG
@@ -53,14 +60,18 @@ class DataHandler:
         data = payload['value'][8:14]
         builder = udp_client.OscMessageBuilder("/myo/accel")
         builder.add_arg(str(payload['connection']), 's')
-        builder.add_arg(self._vector_magnitude(*(struct.unpack('hhh', data))), 'f')
+#        builder.add_arg(self._vector_magnitude(*(struct.unpack('hhh', data))), 'f')
+        for i in struct.unpack('hhh', data):
+            builder.add_arg(i/ACCELEROMETER_SCALE, 'f')
         self.osc.send(builder.build())
 
         # Send gyroscope
         data = payload['value'][14:20]
         builder = udp_client.OscMessageBuilder("/myo/gyro")
         builder.add_arg(str(payload['connection']), 's')
-        builder.add_arg(self._vector_magnitude(*(struct.unpack('hhh', data))), 'f')
+#        builder.add_arg(self._vector_magnitude(*(struct.unpack('hhh', data))), 'f')
+        for i in struct.unpack('hhh', data):
+            builder.add_arg(i/GYROSCOPE_SCALE, 'f')        
         self.osc.send(builder.build())
 
     @staticmethod
@@ -68,6 +79,12 @@ class DataHandler:
         """
         From https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles.
         """
+        
+        w = w / ORIENTATION_SCALE
+        x = x / ORIENTATION_SCALE
+        y = y / ORIENTATION_SCALE
+        z = z / ORIENTATION_SCALE
+        
         # roll (x-axis rotation)
         sinr_cosp = +2.0 * (w * x + y * z)
         cosr_cosp = +1.0 - 2.0 * (x * x + y * y)
