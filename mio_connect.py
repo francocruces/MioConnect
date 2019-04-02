@@ -3,6 +3,7 @@ from src.config import Config
 import serial
 import getopt
 import sys
+import time
 
 
 def main(argv):
@@ -53,6 +54,7 @@ def main(argv):
         # Receive and handle data
         while True:
             myo_driver.receive()
+            time.sleep(0.02)    # reduces CPU usage
 
     except KeyboardInterrupt:
         print("Interrupted.")
